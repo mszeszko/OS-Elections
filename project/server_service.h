@@ -10,14 +10,14 @@
 #include "server_structures.h"
 
 /* Initialization */
-export void initializeServerSyncTools(sharedSynchronizationTools* tools);
+extern void initializeServerSyncTools(sharedSynchronizationTools* tools);
 
-export void initializeServerIPCQueues(sharedIPCQueueIds* queueIds);
+extern void initializeServerIPCQueues(sharedIPCQueueIds* queueIds);
 
 /* Free resources. */
-export void freeServerIPCQueuesResources(sharedIPCQueueIds* queueIds);
+extern void freeServerIPCQueuesResources(sharedIPCQueueIds* queueIds);
 
-export void destroyServerSyncTools(sharedSynchronizationTools* tools);
+extern void destroyServerSyncTools(sharedSynchronizationTools* tools);
 
 
 #endif
