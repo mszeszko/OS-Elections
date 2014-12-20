@@ -23,7 +23,7 @@ sharedSynchronizationTools synchTools;
 int main(int argc, char** argv) {
 
   if (argc != 4) {
-    printf(REPORT_USAGE_ERROR_CODE, argv[0]);
+    printf(SERVER_USAGE_ERROR_CODE, argv[0]);
     exit(EXIT_FAILURE);
   }
 

@@ -12,6 +12,7 @@
 */
 #define COMMITTEE_USAGE_ERROR_CODE "Usage: %s <valid committee number>\n"
 #define REPORT_USAGE_ERROR_CODE "Usage: %s [optional: <list>]\n"
+#define SERVER_USAGE_ERROR_CODE "Usage: %s <lists>, <candidates per list>, <committees>"
 
 /* 
    IPC queue error codes.

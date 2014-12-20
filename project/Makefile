@@ -1,9 +1,9 @@
 CC = gcc
-CFLAGS = -Wall -ansi --pedantic -c
-LDFLAGS = -Wall -ansi --pedantic -lpthread
+CFLAGS = -Wall --pedantic -c
+LDFLAGS = -Wall --pedantic -lpthread
 
-OBJECTS = err.o committee_service.o report_service.o
-ALL = committee report
+OBJECTS = err.o committee_service.o report_service.o server_service.o
+ALL = committee report server
 
 all: $(ALL)
 

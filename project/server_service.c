@@ -11,18 +11,17 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
-#include "constants"
+#include "constants.h"
 #include "err.h"
 #include "error_codes.h"
 
 void initializeServerSyncTools(sharedSynchronizationTools* tools) {
-  int error;
-  if ((error = pthread_mutex_init(&tools->mutex, 0)) != 0)
-    syserr(error, MUTEX_INITIALIZATION_ERROR_CODE);
-  if ((error = pthread_cond_init(&tools->committeeUpdateResults, 0)) != 0)
-    syserr(error, COMMITTEES_CONDITION_INITIALIZATION_ERROR_CODE);
-  if ((error = pthread_cond_init(&tools->reportProcessResults, 0)) != 0)
-    syserr(error, REPORTS_CONDITION_INITIALIZATION_ERROR_CODE);
+  if (pthread_mutex_init(&tools->mutex, 0) != 0)
+    syserr(MUTEX_INITIALIZATION_ERROR_CODE);
+  if (pthread_cond_init(&tools->committeeUpdateResults, 0) != 0)
+    syserr(COMMITTEES_CONDITION_INITIALIZATION_ERROR_CODE);
+  if (pthread_cond_init(&tools->reportProcessResults, 0) != 0)
+    syserr(REPORTS_CONDITION_INITIALIZATION_ERROR_CODE);
 }
 
 void initializeServerIPCQueues(sharedIPCQueueIds* queueIds) {
@@ -58,11 +57,10 @@ void freeServerIPCQueuesResources(sharedIPCQueueIds* queueIds) {
 }
 
 void destroyServerSyncTools(sharedSynchronizationTools* tools) {
-  int error;
-  if ((error = pthread_mutex_destroy(&tools->mutex)) != 0)
-    syserr(error, MUTEX_DESTROY_ERROR_CODE);
-  if ((error = pthread_cond_destroy(&tools->committeeUpdateResults)) != 0)
-    syserr(error, COMMITTEES_CONDITION_DESTROY_ERROR_CODE);
-  if ((error = pthread_cond_destroy(&tools->reportProcessResults)) != 0)
-    syserr(error, REPORTS_CONDITION_DESTROY_ERROR_CODE);
+  if (pthread_mutex_destroy(&tools->mutex) != 0)
+    syserr(MUTEX_DESTROY_ERROR_CODE);
+  if (pthread_cond_destroy(&tools->committeeUpdateResults) != 0)
+    syserr(COMMITTEES_CONDITION_DESTROY_ERROR_CODE);
+  if (pthread_cond_destroy(&tools->reportProcessResults) != 0)
+    syserr(REPORTS_CONDITION_DESTROY_ERROR_CODE);
 }
