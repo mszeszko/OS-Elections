@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -ansi --pedantic -c
-LDFLAGS = -Wall -ansi --pedantic
+LDFLAGS = -Wall -ansi --pedantic -lpthread
 
 OBJECTS = err.o committee_service.o report_service.o
 ALL = committee report
