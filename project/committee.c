@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
   
-  committee = (argc == 0) ? 0 : atoi(argv[1]);
+  committee = atoi(argv[1]);
 
   /* Set up connections if possible. */
   tryInitialConnection(committee);

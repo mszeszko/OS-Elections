@@ -13,7 +13,8 @@
 #define INIT_CONNECTION_IPC_QUEUE_KEY 1234L
 #define COMMITTEE_DATA_IPC_QUEUE_KEY 1235L
 #define FINISH_IPC_QUEUE_KEY 1236L
-#define RAPORT_IPC_QUEUE_KEY 1237L
+#define REPORT_GROUP_ACCESS_TOKEN_IPC_QUEUE_KEY 1237L
+#define REPORT_DATA_IPC_QUEUE_KEY 1238L
 
 /*
    System constraints.
@@ -33,6 +34,8 @@
    Process specific symbols.
 */
 #define FINISHED_DATA_PROCESSING '#'
+#define REPORT_FINISHED '$'
+#define NOT_FINISHED_YET '@'
    
 /*
    Process specific templates.
@@ -43,4 +46,6 @@
 #define INVALID_VOTES_TEMPLATE "Głosów nieważnych: %u\n"
 #define TURNOUT_TEMPLATE "Frekwencja w lokalu: %.2f\n"
 
+#define PROCESSED_COMMITTEES_TEMPLATE "Przetworzonych komisji: %u / %u\n"
+#define COMMITTEE_RESULTS_TEMPLATE "Wyniki poszczególnych list:\n"
 #endif

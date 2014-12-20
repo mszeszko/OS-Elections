@@ -2,8 +2,8 @@ CC = gcc
 CFLAGS = -Wall -ansi --pedantic -c
 LDFLAGS = -Wall -ansi --pedantic
 
-OBJECTS = err.o committee_service.o
-ALL = committee
+OBJECTS = err.o committee_service.o report_service.o
+ALL = committee report
 
 all: $(ALL)
 

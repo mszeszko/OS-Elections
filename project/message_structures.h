@@ -69,7 +69,7 @@ typedef struct {
   unsigned int validVotes;
   unsigned int invalidVotes;
   unsigned int eligibledVoters;
-} reportHeader;
+} reportHeaderMessage;
 
 
 /*
@@ -79,16 +79,24 @@ typedef struct {
   unsigned int list;
   unsigned int candidates;
   unsigned int candidateVotes[MAX_CANDIDATES_PER_LIST];
+  unsigned int votes;
+  char finish;
 } singleListReport;
 
 
 /*
    Report message structures.
-   -> `getReportMessage`: sent by `raport` process to get back report
-      for specific votelist(or eventually all of them).
-   -> `singleListReportMessage`: represents report for specified list.
-   -> `allListReportMessage`: report for all lists.
+   -> `getAccessTokenMessage`,
+   -> `getReportMessage`: sent by `report` process to get back report
+      for specific votelist(or eventually all of them),
+   -> `singleListReportMessage`: represents report for specified list,
+   -> `allListReportMessage`: report for all lists
 */
+typedef struct {
+  long operationId;
+  long reportList;
+} getAccessTokenMessage;
+
 typedef struct {
   long operationId;
   long reportList;
@@ -98,11 +106,5 @@ typedef struct {
   long operationId;
   singleListReport listReport;
 } singleListReportMessage;
-
-typedef struct {
-  long operationId;
-  unsigned int lists;
-  singleListReport allReports[MAX_LISTS];
-} allListReportMessage;
 
 #endif
