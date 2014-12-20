@@ -1,7 +1,7 @@
 /*
-			Maciej Szeszko
-			id: ms335814,
-			University of Warsaw
+      Maciej Szeszko
+      id: ms335814,
+      University of Warsaw
 */
 
 #ifndef __MESSAGE_STRUCTURES_H_
@@ -14,7 +14,7 @@
 /* ************** */
 
 /* 
-	 Message send by committee to initiate connection with server.
+   Message send by committee to initiate connection with server.
    As a response server returns appropriately set `ack` field,
    that represents whether connection has been successfuly initiated or not. 
 */
@@ -78,7 +78,7 @@ typedef struct {
 typedef struct {
   unsigned int list;
   unsigned int candidates;
-  unsigned int candidateVotes[MAX_CANDIDATES];
+  unsigned int candidateVotes[MAX_CANDIDATES_PER_LIST];
 } singleListReport;
 
 
