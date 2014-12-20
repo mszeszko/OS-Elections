@@ -7,6 +7,8 @@
 #ifndef __COMMITTEE_SERVICE_H_
 #define __COMMITTEE_SERVICE_H_
 
+#include "message_structures.h"
+
 extern void prepareConnectionMessage(initialConnectionMessage* message,
   long committee);
 

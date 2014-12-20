@@ -4,7 +4,7 @@
      University of Warsaw
 */
 
-#include "committeeService.h"
+#include "committee_service.h"
 
 #include <stdio.h>
 #include <stdlib.h>

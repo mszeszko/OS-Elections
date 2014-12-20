@@ -21,6 +21,7 @@ int main(int argc, char** argv) {
   
   unsigned int eligibleVoters;
   unsigned int votes;
+  
   long committee;
   
   unsigned int list;
@@ -29,25 +30,31 @@ int main(int argc, char** argv) {
 
   basicCommitteeInfo localInfo;
 
+  int committeeDataIPCQueueId;
+
   committee = (argc == 0) ? 0 : atoi(argv[1]);
 
+  /* Set up connections if possible. */
   tryInitialConnection(committee);
+  tryCommitteeDataQueueConnection(&committeeDataIPCQueueId, committee);
 
   /* Read the data as we got `green light` on processing.. */
   scanf("%u %u", &eligibleVoters, &votes);
   
   /* Compose and send initial data message to committee-dedicated
      server thread. */
-  prepareAndSendBasicCommitteeInfo(&localInfo, elligibleVoters, votes,
-    committee);
+  prepareAndSendBasicCommitteeInfo(committeeDataIPCQueueId, &localInfo,
+    elligibleVoters, votes, committee);
 
   /* Send ordinary chunks of data. */  
   while (scanf("%u %u %u", &list, &candidate, &candidateVotes) != EOF) {
-    prepareAndSendCommitteeMessage(committee, list, candidate, candidateVotes);
+    prepareAndSendCommitteeMessage(committeeDataIPCQueueId, committee, list,
+      candidate, candidateVotes);
   }
 
   /* Send `finish` message to the thread and wait for ACK. */
-  prepareAndSendFinishMessage(committee);
+  prepareAndSendFinishMessage(committeeDataIPCQueueId, committee);
   
-  waitForServerResponseAndPrintResults(committee, &localInfo);
+  waitForServerResponseAndPrintResults(committeeDataIPCQueueId, committee,
+    &localInfo);
 }
