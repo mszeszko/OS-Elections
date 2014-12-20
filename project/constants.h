@@ -22,6 +22,7 @@
 #define MAX_DEDICATED_COMMITTEE_SERVER_THREADS 100
 #define MAX_LISTS 100
 #define MAX_CANDIDATES_PER_LIST 100
+#define MAX_COMMITTEES 10000
 
 /*
    IPC constant message types.

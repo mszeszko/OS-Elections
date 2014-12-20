@@ -33,7 +33,7 @@ typedef struct {
 
 /* Shared synchronization variables. */
 typedef struct {
-  unsigned int committeesWaitingForResultsUpdate;
+  unsigned int committeesWaitingForUpdatingResults;
   unsigned int committeeUpdatingResults;
   unsigned int reportsWaitingForProcessingResults;
   unsigned int reportsProcessingResults;
