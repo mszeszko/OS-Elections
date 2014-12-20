@@ -31,10 +31,10 @@ extern void prepareAndSendCommitteeMessage(int committeeDataIPCQueueId,
 extern void prepareAndSendFinishMessage(int committeeDataIPCQueueId,
   long committee);
 
-extern void printResults(committeeBasicInfo* localInfo,
+extern void printResults(basicCommitteeInfo* localInfo,
   unsigned int processedMessage, unsigned int validVotes);
 
 extern void waitForServerResponseAndPrintResults(long committee,
-  committeeBasicInfo* localInfo);
+  basicCommitteeInfo* localInfo);
 
 #endif

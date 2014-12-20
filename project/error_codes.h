@@ -23,6 +23,6 @@
    Permission error codes.
 */
 #define ACCESS_DENIED_ERROR_CODE "Access denied!\n"
-#define CONNECTION_REFUSED_ERROR_CODE "!"
+#define CONNECTION_REFUSED_ERROR_CODE '!'
 
 #endif

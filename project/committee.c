@@ -9,15 +9,11 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
+#include "committee_service.h"
 #include "error_codes.h"
 #include "message_structures.h"
 
 int main(int argc, char** argv) {
-  /* Validate `committee` argument list. */
-  if (argc != 1) {
-    printf(COMMITTEE_USAGE_ERROR_CODE, argv[0]);
-    exit(EXIT_FAILURE);
-  }
   
   unsigned int eligibleVoters;
   unsigned int votes;
@@ -32,6 +28,12 @@ int main(int argc, char** argv) {
 
   int committeeDataIPCQueueId;
 
+  /* Validate `committee` argument list. */
+  if (argc != 2) {
+    printf(COMMITTEE_USAGE_ERROR_CODE, argv[0]);
+    exit(EXIT_FAILURE);
+  }
+  
   committee = (argc == 0) ? 0 : atoi(argv[1]);
 
   /* Set up connections if possible. */
@@ -43,8 +45,8 @@ int main(int argc, char** argv) {
   
   /* Compose and send initial data message to committee-dedicated
      server thread. */
-  prepareAndSendBasicCommitteeInfo(committeeDataIPCQueueId, &localInfo,
-    elligibleVoters, votes, committee);
+  prepareAndSendBasicCommitteeInfo(committeeDataIPCQueueId, committee,
+    &localInfo, eligibleVoters, votes);
 
   /* Send ordinary chunks of data. */  
   while (scanf("%u %u %u", &list, &candidate, &candidateVotes) != EOF) {
@@ -55,6 +57,7 @@ int main(int argc, char** argv) {
   /* Send `finish` message to the thread and wait for ACK. */
   prepareAndSendFinishMessage(committeeDataIPCQueueId, committee);
   
-  waitForServerResponseAndPrintResults(committeeDataIPCQueueId, committee,
-    &localInfo);
+  waitForServerResponseAndPrintResults(committeeDataIPCQueueId, &localInfo);
+
+  return EXIT_SUCCESS;
 }
