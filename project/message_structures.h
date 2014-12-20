@@ -43,7 +43,7 @@ typedef struct {
   long operationId;
   unsigned int list;
   unsigned int candidate;
-  unsigned int validVotes;
+  unsigned int candidateVotes;
   basicCommitteeInfo localInfo;
 	char finished; 
 } committeeMessage;
