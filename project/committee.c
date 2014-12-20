@@ -43,22 +43,55 @@ void tryInitialConnection(long committee) {
   }
 }
 
-void sendBasicCommitteeInfo(int committeeDataIPCQueueId, long committee,
-  basicCommitteeInfo* localInfo, unsigned int list, unsigned int candidate,
+void sendCommitteeMessage(int IPCQueueId, committeeMessage* message) {
+  if (msgsnd(IPCQueueId, (void*) message, committeeMessageSize, 0) != 0)
+    syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
+}
+
+void prepareAndSendBasicCommitteeInfo(int committeeDataIPCQueueId,
+  long committee, basicCommitteeInfo* localInfo, unsigned int eligibleVoters,
+  unsigned int vote) {
+ 
+  committeeMessage message;
+  const int committeeMessageSize = sizeof(committeeMessage) - sizeof(long);
+
+  /* Initialization. */
+  message.operationId = committee;
+  message.locationInfo = *locationInfo;
+
+  sendCommitteeMessage(committeeDataIPCQueueId, &message);
+}
+
+void prepareAndSendCommitteeMessage(int committeeDataIPCQueueId,
+  long committee, unsigned int list, unsigned int candidate,
   unsigned int candidateVotes) {
 
   committeeMessage message;
   const int committeeMessageSize = sizeof(committeeMessage) - sizeof(long);
 
-  /* Initialize `committeeMessage`. */
+  /* Initialization. */
   message.operationId = committee;
   message.list = list;
   message.candidate = candidate;
   message.candidateVotes = candidateVotes;
   
-  if (msgsnd(committeeDataIPCQueueId, (void*) &message,
-    committeeMessageSize, 0) != 0)
-    syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
+  sendCommitteeMessage(committeeDataIPCQueueId, &message);
+}
+
+void prepareAndSendFinishMessage(int committeeDataIPCQueueId, long committee) {
+  
+  committeeMessage message;
+  const int committeeMessageSize = sizeof(committeeMessage) - sizeof(long);
+
+  /* Initialization */
+  message.operationId = committee;
+  message.finished = FINISHED_DATA_PROCESSING;
+
+  sendCommitteeMessage(committeeDataIPCQueueId, &message);
+}
+
+void waitForServerResponseAndPrintResults(long committee,
+  committeeBasicInfo* localInfo) {
 }
 
 int main(int argc, char** argv) {
@@ -87,12 +120,16 @@ int main(int argc, char** argv) {
   
   /* Compose and send initial data message to committee-dedicated
      server thread. */
-  sendBasicCommitteeInfo(&localInfo, elligibleVoters, votes, committee);
+  prepareAndSendBasicCommitteeInfo(&localInfo, elligibleVoters, votes,
+    committee);
 
   /* Send ordinary chunks of data. */  
   while (scanf("%u %u %u", &list, &candidate, &candidateVotes) != EOF) {
-    sendCommitteeMessage(committee, list, candidate, candidateVotes);
+    prepareAndSendCommitteeMessage(committee, list, candidate, candidateVotes);
   }
 
   /* Send `finish` message to the thread and wait for ACK. */
+  prepareAndSendFinishMessage(committee);
+  
+  waitForServerResponseAndPrintResults(committee, &localInfo);
 }
