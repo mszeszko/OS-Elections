@@ -10,9 +10,11 @@
 #include "server_structures.h"
 
 extern void updateResultsServiceInitialProtocol(
-  sharedSynchronizationTools* tools, sharedSynchronizedVariables* variables);
+  sharedSynchronizationTools* tools,
+  sharedSynchronizationVariables* variables);
 
 extern void updateResultsServiceEndingProtocol(
-  sharedSynchronizationTools* tools, sharedSynchronizedVariables* variables);
+  sharedSynchronizationTools* tools,
+  sharedSynchronizationVariables* variables);
 
 #endif

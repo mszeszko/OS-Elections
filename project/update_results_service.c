@@ -6,22 +6,26 @@
 
 #include "update_results_service.h"
 
+#include "server_structures.h"
+
 void updateResultsServiceInitialProtocol(
-  sharedSynchronizationTools* tools, sharedSynchronizedVariables* variables) {
+  sharedSynchronizationTools* tools,
+  sharedSynchronizationVariables* variables) {
   pthread_mutex_lock(&tools->mutex);
-  ++(variables->committeeWantToUpdateResults);
-  while (!((variables->reportsProcessing == 0) &&
-    (variables->committeeUpdatingResults)))
+  ++(variables->committeesWantToUpdateResults);
+  while (!((variables->reportsProcessingResults == 0) &&
+    (variables->committeesUpdatingResults)))
     pthread_cond_wait(&tools->committeeUpdateResultsCondition, &tools->mutex);
-  ++(variables->committeeUpdatingResults);
+  ++(variables->committeesUpdatingResults);
   pthread_mutex_unlock(&tools->mutex);
 }
 
 void updateResultsServiceEndingProtocol(
-  sharedSynchronizationTools* tools, sharedSynchronizedVariables* variables) {
+  sharedSynchronizationTools* tools,
+  sharedSynchronizationVariables* variables) {
   pthread_mutex_lock(&tools->mutex);
-  --(variables->committeeUpdatingResults);
-  if (--(variables->committeeWantToUpdateResults) == 0)
+  --(variables->committeesUpdatingResults);
+  if (--(variables->committeesWantToUpdateResults) == 0)
     pthread_cond_broadcast(&tools->reportProcessResultsCondition);
   else
     pthread_cond_signal(&tools->committeeUpdateResultsCondition);

@@ -23,18 +23,22 @@ typedef struct {
 
 /* Shared data structures. */
 typedef struct {
-  unsigned int electionsResults[MAX_LISTS][MAX_CANDIDATES_PER_LIST];
+  unsigned int electionResults[MAX_LISTS][MAX_CANDIDATES_PER_LIST];
   unsigned int summaryListVotes[MAX_LISTS];
-  char committeeConnectionPossible[MAX_COMMITTEES];
+  unsigned int processedCommittees;
+  unsigned int committeeConnectionPossible[MAX_COMMITTEES];
   unsigned int eligibledVoters;
   unsigned int validVotes;
   unsigned int invalidVotes;
+  unsigned int lists;
+  unsigned int candidates_per_list;
+  unsigned int committees;
 } sharedDataStructures;
 
 /* Shared synchronization variables. */
 typedef struct {
   unsigned int committeesWantToUpdateResults;
-  unsigned int committeeUpdatingResults;
+  unsigned int committeesUpdatingResults;
   unsigned int reportsProcessingResults;
 } sharedSynchronizationVariables;
  

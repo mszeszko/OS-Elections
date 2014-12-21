@@ -64,6 +64,7 @@ typedef struct {
    Report header structure.
 */
 typedef struct {
+  long operationId;
   unsigned int processedCommittees;
   unsigned int committees;
   unsigned int validVotes;
@@ -78,7 +79,7 @@ typedef struct {
 typedef struct {
   unsigned int list;
   unsigned int candidates;
-  unsigned int candidateVotes[MAX_CANDIDATES_PER_LIST];
+  unsigned int* candidateVotes;
   unsigned int votes;
   char finish;
 } singleListReport;

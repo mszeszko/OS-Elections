@@ -7,16 +7,18 @@
 #include "process_results_service.h"
 
 void processResultsServiceInitialProtocol(
-  sharedSynchronizationTools* tools, sharedSynchronizedVariables* variables) {
+  sharedSynchronizationTools* tools,
+  sharedSynchronizationVariables* variables) {
   pthread_mutex_lock(&tools->mutex);
-  while(!(variables->committeeWantToUpdateResults))
+  while(!(variables->committeesWantToUpdateResults))
     pthread_cond_wait(&tools->reportProcessResultsCondition, &tools->mutex);
   ++(variables->reportsProcessingResults);
   pthread_mutex_unlock(&tools->mutex);
 }
 
 void processResultsServiceEndingProtocol(
-  sharedSynchronizationTools* tools, sharedSynchronizedVariables* variables) {
+  sharedSynchronizationTools* tools,
+  sharedSynchronizationVariables* variables) {
   pthread_mutex_lock(&tools->mutex);
   if (--(variables->reportsProcessingResults) == 0)
     pthread_cond_signal(&tools->committeeUpdateResultsCondition);

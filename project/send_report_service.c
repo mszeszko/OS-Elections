@@ -13,8 +13,9 @@
 #include "constants.h"
 #include "err.h"
 #include "error_codes.h"
+#include "message_structures.h"
 
-void prepareAndSendStatisticsReportHeader(sharedDataStructures* data,
+void prepareAndSendStatisticsHeaderReport(sharedDataStructures* data,
   long operationId, int IPCQueueId) {
   
   reportHeaderMessage headerMessage;
@@ -46,20 +47,21 @@ void prepareAndSendSingleListReport(sharedDataStructures* data,
   /* Initialization */
   listReport.list = list;
   listReport.candidates = data->candidates_per_list;
-  listReport.candidateVotes = data->election
+  listReport.candidateVotes = data->electionResults[list];
   listReport.votes = data->summaryListVotes[list];
   listReport.finish = NOT_FINISHED_YET;
   
   listReportMessage.operationId = operationId;
   listReportMessage.listReport = listReport;
 
-  if (msgsnd(IPCQueueId, (void*) &listReport,
-    singleListReporsMessageSize, 0) != 0)
+  if (msgsnd(IPCQueueId, (void*) &listReportMessage,
+    singleListReportMessageSize, 0) != 0)
     syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
 }
 
-void prepareAndSendCompletedReport(sharedDataStructures* data,
+void prepareAndSendCompleteReport(sharedDataStructures* data,
   unsigned int list, int IPCQueueId) {
+  int i;
   long operationId = (long) list;
   prepareAndSendStatisticsHeaderReport(data, operationId, IPCQueueId);
   if (list == 0) {
