@@ -65,13 +65,15 @@ void sendCommitteeMessage(int IPCQueueId, committeeMessage* message) {
     syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
 }
 
-void prepareAndSendBasicCommitteeInfo(int committeeDataIPCQueueId,
-  long committee, basicCommitteeInfo* localInfo,
-  unsigned int eligibleVoters, unsigned int vote) {
+void prepareAndSendBasicCommitteeInfo(int IPCQueueId,
+  long committee, basicCommitteeInfo* localInfo, unsigned int eligibledVoters,
+  unsigned int totoalVotes) {
  
   committeeMessage message;
 
   /* Initialization. */
+  localInfo->eligibledVoters = eligibledVoters;
+  localInfo->totalVotes = totalVotes;
   message.operationId = committee;
   message.localInfo = *localInfo;
 

@@ -61,5 +61,20 @@ typedef struct {
   pthread_cond_t committeeWorkingThreadsCondition;
 } sharedSynchronizationTools;
 
+typedef struct {
+  sharedIPCQueues queueIds;
+  sharedDataStructures sharedData;
+  sharedSynchronizationVariables syncVariables;
+  sharedSynchronizationTools syncTools;
+} applicationPackage;
+
+typedef struct {
+  unsigned int partialResults[MAX_LISTS][MAX_CANDIDATES_PER_LIST];
+  unsigned int eligibledVoters;
+  unsigned int totalVotes;
+  unsigned int validVotes;
+  unsigned int list;
+} committeeWorkerResources;
+
 #endif
 

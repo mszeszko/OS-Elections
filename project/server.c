@@ -67,13 +67,100 @@ void* reportDispatcherThread(void* data) {
   exit(EXIT_SUCCESS);
 }
 
+void initializeCommitteeWorkerResources(committeeWorkerResources* resources,
+  unsigned int list) {
+  int i, j;
+
+  /* Initialize partial results array. */
+  for(i = 0; i<= sharedData.lists; ++i)
+    for (j = 0; j<= sharedData.candidates_per_list; ++j)
+      resources->partialResults[i][j] = 0;
+  
+  /* Other.. */
+  resources->eligibledVoters = 0;
+  resources->totalVoters = 0;
+  resources->validVotes = 0;
+  resources->list = list; 
+}
+
+void receiveCommitteeMessage(int IPCQueueId, committeeMessage* message,
+  unsigned int list) {
+  const int committeeMessageSize = sizeof(committeeMessage) - sizeof(long);
+  if (msgrcv(IPCQueueId, &message, committeeMessageSize, list, 0)
+    != committeeMessageSize)
+    syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE);
+}
+
 void* committeeWorkerThread(void* data) {
+  committeeMessage message;
+  committeeWorkerResources resources;
+  
+  int i, j;
+
+  /* Initialize resources. */
+  unsigned int transferFinished = 0;
+  unsigned int committee = *((unsigned int*) data);
+  initializeCommitteeWorkerResources(&resources, list);
+
+  /* Process committee data. */
+  while (!transferFinished) {
+    receiveCommitteeMessage(queueIds.committeeDataIPCQueueId, &message,
+      committee);
+    
+    switch (message.type) {
+      case HEADER:
+        resources.eligibledVoters = message.eligibledVoters;
+        resources.totalVotes = message.totalVotes;
+        break;
+      case DATA:
+        resources.partialResults[message.list][message.candidate] =
+          message.candidateVotes;
+        resources.validVotes += message.candidateVotes;
+        break;
+      case FINISH:
+        transferFinished = 1;
+        break;
+    }
+  }
+
+  /* Wait for exclusive access to update shared data. */
+  updateResultsServiceInitialProtocol(&syncTools, &syncVariables);
+
+  /* Update shared data. */
+  
+  /* 1) election results: */
+  for (i = 1; i<= sharedData.lists; ++i)
+    for (j = 1; j<= sharedData.candidatesPerList; ++j)
+      sharedData.electionResults[i][j] += resources.partialResults[i][j];
+
+  /* 2) summary list votes: */
+  sharedData.summaryListVotes = resources.totalVotes; 
+ 
+  /* 3) processed committees: */
+  ++sharedData.processedCommittees;
+
+  /* 4) eligibled voters: */
+  sharedData.eligibledVoters += resources.eligibledVoters;
+
+  /* 5) valid votes: */
+  sharedData.validVotes += resources.validVotes;
+
+  /* 6) invalid votes: */
+  sharedData.invalidVotes += resources.totalVotes - resources.validVotes;
+
+  /* 7) working committee threads: */
+  --syncVariables.workingCommitteeThreads;
+
+  /* Release mutex. */
+  updateResultsServiceEndingProtocol(&syncTools, &syncVariables);
+  
+  // Remember to wake up some thread!
   exit(EXIT_SUCCESS);
 }
 
 void* committeeDispatcherThread(void* data) {
-  unsigned int list;
-  unsigned int list_available;
+  unsigned int committee;
+  unsigned int committee_available;
   
   initialConnectionMessage initMessage;
   const int initialConnectionMessageSize;
@@ -83,28 +170,28 @@ void* committeeDispatcherThread(void* data) {
 
   initialConnectionMessageSize =
     sizeof(initialConnectionMessage) - sizeof(long);
-  pthread_attr_t* worerThreadAttribute = (pthread_attr_t*) data;
+  pthread_attr_t* workerThreadAttribute = (pthread_attr_t*) data;
 
   /* Handle committees connection requests. */
   while (1) {
-    receiveConnectionRequest(queueIds.initConnectionIPCQueueId, &list);
+    receiveConnectionRequest(queueIds.initConnectionIPCQueueId, &committee);
 
     /* Make sure that list is a one of all possible committee values. */
-    if (list >= 1 && list <= sharedData.committees) {
+    if (committee >= 1 && committee <= sharedData.committees) {
     	/* Check whether committee connection has been arranged yet or not.
     	   Connection available: 0, connection arranged yet: 1. */
     	pthread_mutex_lock(&syncTools->mutex);
-    	list_available = sharedData->committeeConnectionPossible[list];
-    	if (list_available == 0)
-    	  sharedData->committeeConnectionPossible[list] = 1;
+    	committee_available = sharedData->committeeConnectionPossible[list];
+    	if (committee_available == 0)
+    	  sharedData->committeeConnectionPossible[committee] = 1;
     	pthread_mutex_unlock(&syncTools->mutex);
     } else {
-      list_available = 1;
+      committee_available = 1;
     }
 
     /* Send response back to the specific committee. */
-    initMessage.operationId = (long) list;
-    initMessage.ack = (list_available == 0) ?
+    initMessage.operationId = (long) committee;
+    initMessage.ack = (committee_available == 0) ?
       CONNECTION_SUCCEEDED : CONNECTION_REFUSED_ERROR_CODE;
     if (msgsnd(queueIds.initConnectionIPCQueueId, (void*) &initMessage,
       initialConnectionMessageSize, 0) != 0)
@@ -126,7 +213,7 @@ void* committeeDispatcherThread(void* data) {
 
     /* Spawn new committee-dedicated thread processing committee data. */
     if (pthread_create(&reportWorkerThreads[list], workerThreadAttribute,
-      committeeWorkerThread, (void*) &list) != 0)
+      committeeWorkerThread, (void*) &committee) != 0)
       syserr(COMMITTEE_WORKER_THREAD_INITIALIZATION_ERROR_CODE);
   }
 

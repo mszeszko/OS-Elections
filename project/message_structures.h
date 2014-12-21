@@ -9,6 +9,15 @@
 
 #include "constants.h"
 
+/* ***** */
+/* ENUMS */
+/* ***** */
+enum CommitteeOperationType {
+  HEADER = 0,
+  DATA,
+  FINISH
+};
+
 /* ************** */
 /* IPC STRUCTURES */
 /* ************** */
@@ -45,7 +54,7 @@ typedef struct {
   unsigned int candidate;
   unsigned int candidateVotes;
   basicCommitteeInfo localInfo;
-	char finished; 
+  enum CommiteeOperationType type;
 } committeeMessage;
 
 
