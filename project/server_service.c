@@ -18,9 +18,9 @@
 void initializeServerSyncTools(sharedSynchronizationTools* tools) {
   if (pthread_mutex_init(&tools->mutex, 0) != 0)
     syserr(MUTEX_INITIALIZATION_ERROR_CODE);
-  if (pthread_cond_init(&tools->committeeUpdateResults, 0) != 0)
+  if (pthread_cond_init(&tools->committeeUpdateResultsCondition, 0) != 0)
     syserr(COMMITTEES_CONDITION_INITIALIZATION_ERROR_CODE);
-  if (pthread_cond_init(&tools->reportProcessResults, 0) != 0)
+  if (pthread_cond_init(&tools->reportProcessResultsCondition, 0) != 0)
     syserr(REPORTS_CONDITION_INITIALIZATION_ERROR_CODE);
 }
 
@@ -59,8 +59,8 @@ void freeServerIPCQueuesResources(sharedIPCQueueIds* queueIds) {
 void destroyServerSyncTools(sharedSynchronizationTools* tools) {
   if (pthread_mutex_destroy(&tools->mutex) != 0)
     syserr(MUTEX_DESTROY_ERROR_CODE);
-  if (pthread_cond_destroy(&tools->committeeUpdateResults) != 0)
+  if (pthread_cond_destroy(&tools->committeeUpdateResultsCondition) != 0)
     syserr(COMMITTEES_CONDITION_DESTROY_ERROR_CODE);
-  if (pthread_cond_destroy(&tools->reportProcessResults) != 0)
+  if (pthread_cond_destroy(&tools->reportProcessResultsCondition) != 0)
     syserr(REPORTS_CONDITION_DESTROY_ERROR_CODE);
 }

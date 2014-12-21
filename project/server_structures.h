@@ -33,9 +33,8 @@ typedef struct {
 
 /* Shared synchronization variables. */
 typedef struct {
-  unsigned int committeesWaitingForUpdatingResults;
+  unsigned int committeesWantToUpdateResults;
   unsigned int committeeUpdatingResults;
-  unsigned int reportsWaitingForProcessingResults;
   unsigned int reportsProcessingResults;
 } sharedSynchronizationVariables;
  
@@ -50,8 +49,8 @@ typedef struct {
 */
 typedef struct {
   pthread_mutex_t mutex; 
-  pthread_cond_t committeeUpdateResults;
-  pthread_cond_t reportProcessResults;
+  pthread_cond_t committeeUpdateResultsCondition;
+  pthread_cond_t reportProcessResultsCondition;
 } sharedSynchronizationTools;
 
 #endif
