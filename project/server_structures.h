@@ -31,12 +31,13 @@ typedef struct {
   unsigned int validVotes;
   unsigned int invalidVotes;
   unsigned int lists;
-  unsigned int candidates_per_list;
+  unsigned int candidatesPerList;
   unsigned int committees;
 } sharedDataStructures;
 
 /* Shared synchronization variables. */
 typedef struct {
+  unsigned int workingCommitteeThreads;
   unsigned int committeesWantToUpdateResults;
   unsigned int committeesUpdatingResults;
   unsigned int reportsProcessingResults;
@@ -52,9 +53,12 @@ typedef struct {
        results and send them safely to the client.
 */
 typedef struct {
+  pthread_attr_t dispatcherThreadAttribute;
+  pthread_attr_t workerThreadAttribute;
   pthread_mutex_t mutex; 
   pthread_cond_t committeeUpdateResultsCondition;
   pthread_cond_t reportProcessResultsCondition;
+  pthread_cond_t committeeWorkingThreadsCondition;
 } sharedSynchronizationTools;
 
 #endif

@@ -35,6 +35,7 @@
 #define FINISHED_DATA_PROCESSING '#'
 #define REPORT_FINISHED '$'
 #define NOT_FINISHED_YET '@'
+#define CONNECTION_SUCCEDDED '<'
    
 /*
    Process specific templates.
