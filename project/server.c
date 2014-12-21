@@ -15,6 +15,7 @@
 #include "message_structures.h"
 #include "process_results_service.h"
 #include "send_report_service.h"
+#include "server_config_service.h"
 #include "server_service.h"
 #include "server_structures.h"
 #include "update_results_service.h"
@@ -50,13 +51,14 @@ void* reportDispatcherThread(void* data) {
   pthread_t reportWorkerThreads[MAX_LISTS + 1];
 
   /* Initialize report group access token IPC queue. */
-  initializeReportGroupAccesTokenIPCQueue(sharedData.committees);
+  initializeReportGroupAccessTokenIPCQueue(
+    queueIds.reportGroupAccessTokenIPCQueueId, sharedData.committees);
 
   while (1) {
-		receiveReportRequestMessage(&list);
+    receiveReportRequestMessage(queueIds.reportDataIPCQueueId, &list);
 
     /* Spawn new report-dedicated thread to handle report sending. */
-    createReportWorkerThread(&reportWorkerThreads[list], list);
+    /* createReportWorkerThread(&reportWorkerThreads[list], list); */
   }
 
   exit(EXIT_SUCCESS);
@@ -70,6 +72,7 @@ int main(int argc, char** argv) {
   
   pthread_t reportDispatcher;
   pthread_attr_t threadAttribute;
+  int detachState;
 
   if (argc != 4) {
     printf(SERVER_USAGE_ERROR_CODE, argv[0]);
@@ -81,10 +84,10 @@ int main(int argc, char** argv) {
   initializeServerIPCQueues(&queueIds);
 
   /* Initialize common threads attribute. */
-  initializeThreadAttribute(&threadAttribute);
+  initializeThreadAttribute(&threadAttribute, detachState);
 
   /* Initialize report dispatcher thread. */
-  createReportDispatcherThread(&reportDispatcher, &threadAttribute);
+  /* createReportDispatcherThread(&reportDispatcher, &threadAttribute); */
 
   /* Handle committees connection requests. */
   while (1) {

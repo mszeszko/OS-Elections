@@ -6,6 +6,10 @@
 
 #include "server_config_service.h"
 
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+
 #include "constants.h"
 #include "err.h"
 #include "error_codes.h"

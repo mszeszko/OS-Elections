@@ -28,9 +28,7 @@
    IPC constant message types.
 */
 #define INIT_CONNECTION_MESSAGE_TYPE 0L
-#define SEND_RAPORT_REQUEST_MESSAGE_TYPE 0L
-#define READ_RAPORT_MESSAGE_TYPE 1L + MAX_LISTS
-
+#define REPORT_REQUEST_MESSAGE_TYPE 0L
 /*
    Process specific symbols.
 */

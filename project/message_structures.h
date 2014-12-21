@@ -108,4 +108,7 @@ typedef struct {
   singleListReport listReport;
 } singleListReportMessage;
 
+typedef struct {
+  long operationId;
+} groupAccessTokenMessage;
 #endif

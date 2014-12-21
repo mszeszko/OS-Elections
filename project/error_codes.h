@@ -29,6 +29,8 @@
 #define MUTEX_INITIALIZATION_ERROR_CODE "Error: Mutex initialization failed!\n"
 #define COMMITTEES_CONDITION_INITIALIZATION_ERROR_CODE "Error: Committees condition initialization failed!\n"
 #define REPORTS_CONDITION_INITIALIZATION_ERROR_CODE "Error: Reports condition initialization failed!\n"
+#define THREAD_ATTRIBUTE_INITIALIZATION_ERROR_CODE "Error: threads' attribute initialization failed!\n"
+#define THREAD_ATTRIBUTE_DETACHSTATE_INITIALIZATION_ERROR_CODE "Error: threads' attribute detachstate initialization failed!\n"
 #define MUTEX_DESTROY_ERROR_CODE "Error: Mutex destruction failed!\n"
 #define COMMITTEES_CONDITION_DESTROY_ERROR_CODE "Error: Committees condition destruction failed!\n"
 #define REPORTS_CONDITION_DESTROY_ERROR_CODE "Error: Reports condition destruction failed!\n"
