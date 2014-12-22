@@ -29,6 +29,9 @@ sharedDataStructures sharedData;
 sharedSynchronizationVariables syncVariables;
 sharedSynchronizationTools syncTools;
 
+pthread_t reportDispatcher;
+pthread_t committeeDispatcher;
+
 
 void* reportWorkerThread(void* data) {
   const int list = *((int *) data);
@@ -184,16 +187,27 @@ void* committeeDispatcherThread(void* data) {
   return 0;
 }
 
+/* Signal handling. */
+
+void SIGUSR1handler(int signal) {
+  fprintf(stderr, "\nThread %lx received SIGUSR1.\n", pthread_self());
+}
+
 void freeResources(int signum) {
+  fprintf(stderr, "\nFree resources..\n");
+
+  /* Kill dispatcher threads..*/
+  pthread_kill(reportDispatcher, SIGUSR1);
+  pthread_kill(committeeDispatcher, SIGUSR1);
+
+  /* Free resources. */
   freeServerIPCQueuesResources(&queueIds);
   destroyServerSyncTools(&syncTools);
-
+  
   exit(signum);
 }
 
 int main(int argc, char** argv) {
-  pthread_t reportDispatcher;
-  pthread_t committeeDispatcher;
   
   struct sigaction setup_action;
   sigset_t block_mask;
@@ -214,13 +228,13 @@ int main(int argc, char** argv) {
   /* Set signal handling. */
   sigfillset(&block_mask);
   sigdelset(&block_mask, SIGINT);
+  sigdelset(&block_mask, SIGUSR1);
   
   setup_action.sa_handler = freeResources;
   setup_action.sa_mask = block_mask;
   
   if (sigaction(SIGINT, &setup_action, 0) == -1)
     syserr(SIGNAL_HANDLING_INITIALIZATION_ERROR_CODE);
-
 
   /* Initialize server IPC queues and synchronization tools. */
   initializeServerSyncTools(&syncTools);
