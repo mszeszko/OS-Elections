@@ -6,6 +6,8 @@
 
 #include "server_config_service.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
@@ -39,20 +41,19 @@ void initializeReportGroupAccessTokenIPCQueue(int IPCQueueId,
   int i;
   for (i = 1; i<= committees; ++i)
     putSingleGroupAccessToken(IPCQueueId, i);
+  putSingleGroupAccessToken(IPCQueueId, ALL_LISTS_ID);
 }
 
 void receiveReportRequestMessage(int IPCQueueId, unsigned int* list) {
   getReportMessage request;
   const int getReportMessageSize = sizeof(getReportMessage) - sizeof(long); 
-
+  
   if (msgrcv(IPCQueueId, &request, getReportMessageSize,
     REPORT_REQUEST_MESSAGE_TYPE, 0) != getReportMessageSize)
     syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE);
-
   *list = request.reportList;
 }
 
 void putBackGroupAccessToken(int IPCQueueId, unsigned int list) {
-  groupAccessTokenMessage tokenMessage;
   putSingleGroupAccessToken(IPCQueueId, list);
 }

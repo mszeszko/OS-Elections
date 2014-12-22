@@ -6,15 +6,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
 #include "constants.h"
+#include "err.h"
 #include "error_codes.h"
 #include "message_structures.h"
 #include "process_results_service.h"
 #include "send_report_service.h"
+#include "server_committee_service.h"
 #include "server_config_service.h"
 #include "server_service.h"
 #include "server_structures.h"
@@ -29,27 +32,24 @@ sharedSynchronizationTools syncTools;
 
 void* reportWorkerThread(void* data) {
   const unsigned int list = *((unsigned int *) data);
-  
   /* Acquire mutex for `read` operation. */
-  processResultsServiceInitialProtocol(&syncTools, &syncVariables);
+  /*processResultsServiceInitialProtocol(&syncTools, &syncVariables);*/
   
   /* Process the data. */
   prepareAndSendCompleteReport(&sharedData, list, queueIds.reportDataIPCQueueId);
-
   /* Perform ending protocol. */
-  processResultsServiceEndingProtocol(&syncTools, &syncVariables);
+  /*processResultsServiceEndingProtocol(&syncTools, &syncVariables);*/
 
   /* After passing data for specific list or complete set of all lists
 	   put back group access token of value `list` to appropriate IPC queue. */
-  putBackGroupAccessToken(list, queueIds.reportGroupAccessTokenIPCQueueId); 
+  putBackGroupAccessToken(queueIds.reportGroupAccessTokenIPCQueueId, list);
+
   exit(EXIT_SUCCESS);
 }
 
 void* reportDispatcherThread(void* data) {
   unsigned int list;
-
-  pthread_t reportWorkerThreads[MAX_LISTS + 1];
-  pthread_attr_t* workerThreadAttribute = (pthread_attr_t*) data;
+  pthread_t reportWorkerThreads[ALL_LISTS_ID + 1];
 
   /* Initialize all report group access tokens in appropriate  IPC queue. */
   initializeReportGroupAccessTokenIPCQueue(
@@ -57,50 +57,25 @@ void* reportDispatcherThread(void* data) {
 
   while (1) {
     receiveReportRequestMessage(queueIds.reportDataIPCQueueId, &list);
-
+    
     /* Spawn new report-dedicated thread to handle report sending. */
-    if (pthread_create(&reportWorkerThreads[list], workerThreadAttribute,
-      reportWorkerThread, (void*) &list) != 0)
+    if (pthread_create(&reportWorkerThreads[list],
+      &syncTools.workerThreadAttribute, reportWorkerThread,
+      (void*) &list) != 0)
       syserr(REPORT_WORKER_THREAD_INITIALIZATION_ERROR_CODE);
   }
 
   exit(EXIT_SUCCESS);
 }
 
-void initializeCommitteeWorkerResources(committeeWorkerResources* resources,
-  unsigned int list) {
-  int i, j;
-
-  /* Initialize partial results array. */
-  for(i = 0; i<= sharedData.lists; ++i)
-    for (j = 0; j<= sharedData.candidates_per_list; ++j)
-      resources->partialResults[i][j] = 0;
-  
-  /* Other.. */
-  resources->eligibledVoters = 0;
-  resources->totalVoters = 0;
-  resources->validVotes = 0;
-  resources->list = list; 
-}
-
-void receiveCommitteeMessage(int IPCQueueId, committeeMessage* message,
-  unsigned int list) {
-  const int committeeMessageSize = sizeof(committeeMessage) - sizeof(long);
-  if (msgrcv(IPCQueueId, &message, committeeMessageSize, list, 0)
-    != committeeMessageSize)
-    syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE);
-}
-
 void* committeeWorkerThread(void* data) {
   committeeMessage message;
   committeeWorkerResources resources;
-  
-  int i, j;
 
   /* Initialize resources. */
   unsigned int transferFinished = 0;
   unsigned int committee = *((unsigned int*) data);
-  initializeCommitteeWorkerResources(&resources, list);
+  initializeCommitteeWorkerResources(&sharedData, &resources, committee);
 
   /* Process committee data. */
   while (!transferFinished) {
@@ -109,8 +84,8 @@ void* committeeWorkerThread(void* data) {
     
     switch (message.type) {
       case HEADER:
-        resources.eligibledVoters = message.eligibledVoters;
-        resources.totalVotes = message.totalVotes;
+        resources.eligibledVoters = message.localInfo.eligibledVoters;
+        resources.totalVotes = message.localInfo.totalVotes;
         break;
       case DATA:
         resources.partialResults[message.list][message.candidate] =
@@ -121,40 +96,27 @@ void* committeeWorkerThread(void* data) {
         transferFinished = 1;
         break;
     }
-  }
 
+    ++resources.processedMessages;
+  }
+  /* Send ack message to committee. */
+  sendAckMessage(queueIds.finishIPCQueueId, committee,
+    resources.processedMessages, resources.validVotes);
+ 
   /* Wait for exclusive access to update shared data. */
   updateResultsServiceInitialProtocol(&syncTools, &syncVariables);
 
   /* Update shared data. */
-  
-  /* 1) election results: */
-  for (i = 1; i<= sharedData.lists; ++i)
-    for (j = 1; j<= sharedData.candidatesPerList; ++j)
-      sharedData.electionResults[i][j] += resources.partialResults[i][j];
+  updateSharedData(&sharedData, &syncVariables, &resources);
 
-  /* 2) summary list votes: */
-  sharedData.summaryListVotes = resources.totalVotes; 
- 
-  /* 3) processed committees: */
-  ++sharedData.processedCommittees;
-
-  /* 4) eligibled voters: */
-  sharedData.eligibledVoters += resources.eligibledVoters;
-
-  /* 5) valid votes: */
-  sharedData.validVotes += resources.validVotes;
-
-  /* 6) invalid votes: */
-  sharedData.invalidVotes += resources.totalVotes - resources.validVotes;
-
-  /* 7) working committee threads: */
-  --syncVariables.workingCommitteeThreads;
-
-  /* Release mutex. */
+  /* Release mutex and wake up awaiting thread. */
   updateResultsServiceEndingProtocol(&syncTools, &syncVariables);
   
-  // Remember to wake up some thread!
+  /* Wake up awaiting worker thread! */
+  pthread_mutex_lock(&syncTools.mutex);
+  pthread_cond_signal(&syncTools.committeeWorkingThreadsCondition);
+  pthread_mutex_unlock(&syncTools.mutex);
+
   exit(EXIT_SUCCESS);
 }
 
@@ -163,14 +125,12 @@ void* committeeDispatcherThread(void* data) {
   unsigned int committee_available;
   
   initialConnectionMessage initMessage;
-  const int initialConnectionMessageSize;
+  int initialConnectionMessageSize;
 
   pthread_t committeeWorkerThreads[MAX_COMMITTEES + 1];
-  pthread_attr_t* workerThreadAttribute;
 
   initialConnectionMessageSize =
     sizeof(initialConnectionMessage) - sizeof(long);
-  pthread_attr_t* workerThreadAttribute = (pthread_attr_t*) data;
 
   /* Handle committees connection requests. */
   while (1) {
@@ -180,11 +140,11 @@ void* committeeDispatcherThread(void* data) {
     if (committee >= 1 && committee <= sharedData.committees) {
     	/* Check whether committee connection has been arranged yet or not.
     	   Connection available: 0, connection arranged yet: 1. */
-    	pthread_mutex_lock(&syncTools->mutex);
-    	committee_available = sharedData->committeeConnectionPossible[list];
+    	pthread_mutex_lock(&syncTools.mutex);
+    	committee_available = sharedData.committeeConnectionPossible[committee];
     	if (committee_available == 0)
-    	  sharedData->committeeConnectionPossible[committee] = 1;
-    	pthread_mutex_unlock(&syncTools->mutex);
+    	  sharedData.committeeConnectionPossible[committee] = 1;
+    	pthread_mutex_unlock(&syncTools.mutex);
     } else {
       committee_available = 1;
     }
@@ -192,38 +152,49 @@ void* committeeDispatcherThread(void* data) {
     /* Send response back to the specific committee. */
     initMessage.operationId = (long) committee;
     initMessage.ack = (committee_available == 0) ?
-      CONNECTION_SUCCEEDED : CONNECTION_REFUSED_ERROR_CODE;
+      CONNECTION_SUCCEEDED : CONNECTION_REFUSED;
     if (msgsnd(queueIds.initConnectionIPCQueueId, (void*) &initMessage,
       initialConnectionMessageSize, 0) != 0)
       syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
 
     /* In case of connection refused statement, stop further processing. */
-    if (list_available == 1)
+    if (committee_available == 1)
       continue;
 
     /* Wait to process committee data  until there will be less than maximal
        number of committee-dedicated working threads. */
-    pthread_mutex_lock(&syncTools->mutex);
-    while (sharedVariables->workingCommitteeThreads ==
-      MAX_DEDICATED_COMMITEE_SERVER_THREADS) {
-      pthread_cond_wait(&syncTools->committeeWorkingThreadsCondition,
-        &syncTools->mutex);
+    pthread_mutex_lock(&syncTools.mutex);
+    while (syncVariables.workingCommitteeThreads ==
+      MAX_DEDICATED_COMMITTEE_SERVER_THREADS) {
+      pthread_cond_wait(&syncTools.committeeWorkingThreadsCondition,
+        &syncTools.mutex);
     }
-    pthread_mutex_unlock(&syncTools->mutex);
+    pthread_mutex_unlock(&syncTools.mutex);
 
     /* Spawn new committee-dedicated thread processing committee data. */
-    if (pthread_create(&reportWorkerThreads[list], workerThreadAttribute,
-      committeeWorkerThread, (void*) &committee) != 0)
+    if (pthread_create(&committeeWorkerThreads[committee],
+      &syncTools.workerThreadAttribute, committeeWorkerThread,
+      (void*) &committee) != 0)
       syserr(COMMITTEE_WORKER_THREAD_INITIALIZATION_ERROR_CODE);
   }
 
   exit(EXIT_SUCCESS);
 }
 
+void freeResources(int signum) {
+  freeServerIPCQueuesResources(&queueIds);
+  destroyServerSyncTools(&syncTools);
+
+  exit(signum);
+}
+
 int main(int argc, char** argv) {
   pthread_t reportDispatcher;
   pthread_t committeeDispatcher;
-
+  
+  struct sigaction setup_action;
+  sigset_t block_mask;
+  
   int dispatcherThreadDetachState = PTHREAD_CREATE_JOINABLE;
   int workerThreadDetachState = PTHREAD_CREATE_DETACHED;
 
@@ -236,6 +207,17 @@ int main(int argc, char** argv) {
   sharedData.lists = atoi(argv[1]);
   sharedData.candidatesPerList = atoi(argv[2]);
   sharedData.committees = atoi(argv[3]);
+  
+  /* Set signal handling. */
+  sigfillset(&block_mask);
+  sigdelset(&block_mask, SIGINT);
+  
+  setup_action.sa_handler = freeResources;
+  setup_action.sa_mask = block_mask;
+  
+  if (sigaction(SIGINT, &setup_action, 0) == -1)
+    syserr(SIGNAL_HANDLING_INITIALIZATION_ERROR_CODE);
+
 
   /* Initialize server IPC queues and synchronization tools. */
   initializeServerSyncTools(&syncTools);
@@ -243,26 +225,24 @@ int main(int argc, char** argv) {
 
   /* Initialize distinct thread attributes. */
   initializeThreadAttribute(&syncTools.dispatcherThreadAttribute,
-    dipspatcherThreadDetachState);
+    dispatcherThreadDetachState);
   initializeThreadAttribute(&syncTools.workerThreadAttribute,
     workerThreadDetachState);
 
   /* Create dispatcher threads. */
-  if (pthread_create(&reportDispatcher, &threadAttribute,
+  if (pthread_create(&reportDispatcher, &syncTools.dispatcherThreadAttribute,
     reportDispatcherThread, (void*) &syncTools.workerThreadAttribute) != 0)
     syserr(REPORT_DISPATCHER_THREAD_INITIALIZATION_ERROR_CODE);
-  if (pthread_create(&committeeDispatcher, &threadAttribute,
-    committeeDispatcherThread, (void*) &syncTools.workerThreadAttribute) != 0)
+  if (pthread_create(&committeeDispatcher,
+    &syncTools.dispatcherThreadAttribute, committeeDispatcherThread,
+    (void*) &syncTools.workerThreadAttribute) != 0)
     syserr(COMMITTEE_DISPATCHER_THREAD_INITIALIZATION_ERROR_CODE);
   
   /* Wait for dispatcher threads. */
-  if (pthread_join(reportDispatcherThread, 0) != 0)
+  if (pthread_join(reportDispatcher, 0) != 0)
     syserr(REPORT_DISPATCHER_THREAD_JOIN_ERROR_CODE);
-  if (pthread_join(committeeDispatcherThread, 0) != 0)
+  if (pthread_join(committeeDispatcher, 0) != 0)
     syserr(COMMITTEE_DISPATCHER_THREAD_JOIN_ERROR_CODE);
-  
-  freeServerIPCQueuesResources(&queueIds);
-  destroyServerSyncTools(&syncTools);
 
   return EXIT_SUCCESS;
 }

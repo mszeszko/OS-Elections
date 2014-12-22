@@ -10,6 +10,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
+#include "constants.h"
 #include "error_codes.h"
 #include "message_structures.h"
 #include "report_service.h"
@@ -26,7 +27,7 @@ int main(int argc, char** argv) {
  
   /* By default, non-parametrized `report` process expects results
      from all lists and it's represented by `list` = 0. */
-  list = (argc == 2) ? atoi(argv[1]) : 0;
+  list = (argc == 2) ? atoi(argv[1]) : ALL_LISTS_ID;
 
   /* We do allow to read reports in parellel for at most L + 1 processes
      that represents groups of distinct lists demands. */
@@ -35,6 +36,8 @@ int main(int argc, char** argv) {
   /* We do have access to the token that represents reports for our `list`
      so request the data from the server. */
   tryReportConnection(&reportDataIPCQueueId);
+
+  sendGetReportMessageRequest(reportDataIPCQueueId, list);
 
   receiveAndPrintData(reportDataIPCQueueId, list);
 

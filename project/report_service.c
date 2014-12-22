@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
@@ -12,20 +13,20 @@
 
 void getReportGroupAccessToken(unsigned int list) {
   int reportGroupAccessTokenIPCQueueId;
-
- 	getAccessTokenMessage accessTokenMessage;
+  getAccessTokenMessage accessTokenMessage;
   const int getAccessTokenMessageSize =
     sizeof(getAccessTokenMessage) - sizeof(long);
+
 
   if ((reportGroupAccessTokenIPCQueueId =
     msgget(REPORT_GROUP_ACCESS_TOKEN_IPC_QUEUE_KEY, 0)) == -1)
     syserr(IPC_QUEUE_NOT_INITIALIZED_ERROR_CODE);
  
   /* Wait for reading access token.
-     If `list` = 0 then we wait for complexed report for all lists. */
+     If `list` = `ALL_LISTS_ID` then wait for report for all lists. */
   if (msgrcv(reportGroupAccessTokenIPCQueueId, &accessTokenMessage,
     getAccessTokenMessageSize, (long)list, 0) != getAccessTokenMessageSize)
-    syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE);
+    syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE); 
 }
 
 void tryReportConnection(int* reportDataIPCQueueId) {
@@ -33,8 +34,18 @@ void tryReportConnection(int* reportDataIPCQueueId) {
     syserr(IPC_QUEUE_NOT_INITIALIZED_ERROR_CODE);
 }
 
-void printReportHeader(int reportDataIPCQueueId, unsigned int list) {
+void sendGetReportMessageRequest(int IPCQueueId, unsigned int list) {
+  getReportMessage reportMessage;
+  const int getReportMessageSize = sizeof(getReportMessage) - sizeof(long);
+ 
+  reportMessage.operationId = REPORT_REQUEST_MESSAGE_TYPE;
+  reportMessage.reportList = (long) list;
   
+  if (msgsnd(IPCQueueId, &reportMessage, getReportMessageSize, 0) != 0)
+    syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
+}
+
+void printReportHeader(int reportDataIPCQueueId, unsigned int list) {
   reportHeaderMessage header;
   float turnoutPercentage;
   const int reportHeaderMessageSize =
@@ -44,34 +55,38 @@ void printReportHeader(int reportDataIPCQueueId, unsigned int list) {
     (long)list, 0) != reportHeaderMessageSize)
     syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE);
 
-  turnoutPercentage = (((float)header.validVotes + (float)header.invalidVotes) 
-    / header.eligibledVoters) * 100;
+  turnoutPercentage = 0;
+  if (header.validVotes != 0) {
+    turnoutPercentage =
+      (((float)header.validVotes + (float)header.invalidVotes) /
+      header.eligibledVoters) * 100;
+  }
 
-  printf(PROCESSED_COMMITTEES_TEMPLATE, header.processedCommittees,
+  fprintf(stderr, PROCESSED_COMMITTEES_TEMPLATE, header.processedCommittees,
     header.committees);
-  printf(ELIGIBLED_VOTERS_TEMPLATE, header.eligibledVoters);
-  printf(VALID_VOTES_TEMPLATE, header.validVotes);
-  printf(INVALID_VOTES_TEMPLATE, header.invalidVotes);
-  printf(TURNOUT_TEMPLATE, turnoutPercentage);
-  printf(COMMITTEE_RESULTS_TEMPLATE);
+  fprintf(stderr, ELIGIBLED_VOTERS_TEMPLATE, header.eligibledVoters);
+  fprintf(stderr, VALID_VOTES_TEMPLATE, header.validVotes);
+  fprintf(stderr, INVALID_VOTES_TEMPLATE, header.invalidVotes);
+  fprintf(stderr, TURNOUT_TEMPLATE, turnoutPercentage);
+  fprintf(stderr, COMMITTEE_RESULTS_TEMPLATE);
 }
 
 void printSingleListReport(singleListReport* listReport) {
   int i;
 
   /* List. */
-  printf("%u ", listReport->list);
+  fprintf(stderr, "%u ", listReport->list);
   
   /* Votes. */
-  printf("%u ", listReport->votes);
+  fprintf(stderr, "%u ", listReport->votes);
 
   /* Votes for particular candidate. */
   for (i = 1; i<= listReport->candidates; ++i)
-    printf("%u ", listReport->candidateVotes[i]);
+    fprintf(stderr, "%u ", listReport->candidateVotes[i]);
+  fprintf(stderr, "\n");
 }
 
 void receiveAndPrintData(int reportDataIPCQueueId, unsigned int list) {
-  
   singleListReportMessage reportMessage;
   const int singleListReportMessageSize =
     sizeof(singleListReportMessage) - sizeof(long);
@@ -84,8 +99,7 @@ void receiveAndPrintData(int reportDataIPCQueueId, unsigned int list) {
       singleListReportMessageSize, (long)list, 0) !=
       singleListReportMessageSize)
       syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE);
-
-    if (reportMessage.listReport.finish == REPORT_FINISHED)
+    if (reportMessage.listReport.reportProgress == REPORT_COMPLETED)
       break;
     
     printSingleListReport(&reportMessage.listReport);

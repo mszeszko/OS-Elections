@@ -23,12 +23,13 @@
 #define MAX_LISTS 100
 #define MAX_CANDIDATES_PER_LIST 100
 #define MAX_COMMITTEES 10000
+#define ALL_LISTS_ID MAX_LISTS + 1
 
 /*
    IPC constant message types.
 */
-#define INIT_CONNECTION_MESSAGE_TYPE 0L
-#define REPORT_REQUEST_MESSAGE_TYPE 0L
+#define INIT_CONNECTION_MESSAGE_TYPE MAX_LISTS + 1
+#define REPORT_REQUEST_MESSAGE_TYPE MAX_LISTS + 2
 /*
    Process specific symbols.
 */

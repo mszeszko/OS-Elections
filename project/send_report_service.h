@@ -15,6 +15,9 @@ extern void prepareAndSendStatisticsReportHeader(sharedDataStructures* data,
 extern void prepareAndSendSingleListReport(sharedDataStructures* data,
   unsigned int list, long operationId, int IPCQueueId);
 
+extern void prepareAndSendReportFinishMessage(long operationId,
+  int IPCQueueId);
+
 extern void prepareAndSendCompleteReport(sharedDataStructures* data,
   unsigned int list, int IPCQueueId);
 

@@ -18,6 +18,17 @@ enum CommitteeOperationType {
   FINISH
 };
 
+enum ReportProgress {
+  REPORT_IN_PROGRESS = 0,
+  REPORT_COMPLETED
+};
+
+enum Connection {
+  CONNECTION_SUCCEEDED = 0,
+  CONNECTION_REFUSED
+};
+
+
 /* ************** */
 /* IPC STRUCTURES */
 /* ************** */
@@ -29,7 +40,8 @@ enum CommitteeOperationType {
 */
 typedef struct {
   long operationId;
-  char ack;
+  unsigned int committee;
+  enum Connection ack;
 } initialConnectionMessage;
 
 
@@ -54,7 +66,7 @@ typedef struct {
   unsigned int candidate;
   unsigned int candidateVotes;
   basicCommitteeInfo localInfo;
-  enum CommiteeOperationType type;
+  enum CommitteeOperationType type;
 } committeeMessage;
 
 
@@ -88,9 +100,9 @@ typedef struct {
 typedef struct {
   unsigned int list;
   unsigned int candidates;
-  unsigned int* candidateVotes;
+  unsigned int candidateVotes[MAX_LISTS];
   unsigned int votes;
-  char finish;
+  enum ReportProgress reportProgress;
 } singleListReport;
 
 
@@ -104,7 +116,7 @@ typedef struct {
 */
 typedef struct {
   long operationId;
-  long reportList;
+  /*long reportList;*/
 } getAccessTokenMessage;
 
 typedef struct {
@@ -120,4 +132,5 @@ typedef struct {
 typedef struct {
   long operationId;
 } groupAccessTokenMessage;
+
 #endif

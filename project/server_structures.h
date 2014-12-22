@@ -62,7 +62,7 @@ typedef struct {
 } sharedSynchronizationTools;
 
 typedef struct {
-  sharedIPCQueues queueIds;
+  sharedIPCQueueIds queueIds;
   sharedDataStructures sharedData;
   sharedSynchronizationVariables syncVariables;
   sharedSynchronizationTools syncTools;
@@ -71,6 +71,7 @@ typedef struct {
 typedef struct {
   unsigned int partialResults[MAX_LISTS][MAX_CANDIDATES_PER_LIST];
   unsigned int eligibledVoters;
+  unsigned int processedMessages;
   unsigned int totalVotes;
   unsigned int validVotes;
   unsigned int list;

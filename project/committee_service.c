@@ -67,7 +67,7 @@ void sendCommitteeMessage(int IPCQueueId, committeeMessage* message) {
 
 void prepareAndSendBasicCommitteeInfo(int IPCQueueId,
   long committee, basicCommitteeInfo* localInfo, unsigned int eligibledVoters,
-  unsigned int totoalVotes) {
+  unsigned int totalVotes) {
  
   committeeMessage message;
 
@@ -77,12 +77,11 @@ void prepareAndSendBasicCommitteeInfo(int IPCQueueId,
   message.operationId = committee;
   message.localInfo = *localInfo;
 
-  sendCommitteeMessage(committeeDataIPCQueueId, &message);
+  sendCommitteeMessage(IPCQueueId, &message);
 }
 
-void prepareAndSendCommitteeMessage(int committeeDataIPCQueueId,
-  long committee, unsigned int list, unsigned int candidate,
-  unsigned int candidateVotes) {
+void prepareAndSendCommitteeMessage(int IPCQueueId, long committee,
+  unsigned int list, unsigned int candidate, unsigned int candidateVotes) {
 
   committeeMessage message;
 
@@ -92,19 +91,18 @@ void prepareAndSendCommitteeMessage(int committeeDataIPCQueueId,
   message.candidate = candidate;
   message.candidateVotes = candidateVotes;
   
-  sendCommitteeMessage(committeeDataIPCQueueId, &message);
+  sendCommitteeMessage(IPCQueueId, &message);
 }
 
-void prepareAndSendFinishMessage(int committeeDataIPCQueueId,
-  long committee) {
+void prepareAndSendFinishMessage(int IPCQueueId, long committee) {
   
   committeeMessage message;
 
   /* Initialization */
   message.operationId = committee;
-  message.finished = FINISHED_DATA_PROCESSING;
+  message.type = FINISH;
 
-  sendCommitteeMessage(committeeDataIPCQueueId, &message);
+  sendCommitteeMessage(IPCQueueId, &message);
 }
 
 void printResults(basicCommitteeInfo* localInfo,

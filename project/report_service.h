@@ -13,4 +13,6 @@ extern void tryReportConnection(int* reportDataIPCQueueId);
 
 extern void receiveAndPrintData(int reportDataIPCQueueId, unsigned int list);
 
+extern void sendGetReportMessageRequest(int IPCQueueId, unsigned int list);
+
 #endif
