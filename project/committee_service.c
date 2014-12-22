@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
@@ -33,11 +34,15 @@ void tryInitialConnection(long committee) {
     msgget(INIT_CONNECTION_IPC_QUEUE_KEY, 0)) == -1)
     syserr(IPC_QUEUE_NOT_INITIALIZED_ERROR_CODE);
   
+  /* Initialize connection message. */
+  connectionMessage.operationId = INIT_CONNECTION_MESSAGE_TYPE;;
+  connectionMessage.committee = (unsigned int) committee;
+
   /* Try connecting to the server. */
   if (msgsnd(initConnectionIPCQueueId, (void*) &connectionMessage,
     initialConnectionMessageSize, 0) != 0)
     syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
-    
+ 
   /* Wait for servers' response, because maybe there is engaged the maximal
      number of committee-dedicated server threads. */
   if (msgrcv(initConnectionIPCQueueId, &connectionMessage,
@@ -46,8 +51,10 @@ void tryInitialConnection(long committee) {
     syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE);
 
   /* Examine server response. */
-  if (connectionMessage.ack == CONNECTION_REFUSED_ERROR_CODE)
+  if (connectionMessage.ack == CONNECTION_REFUSED)
     syserr(ACCESS_DENIED_ERROR_CODE);
+  
+  fprintf(stderr, "Dostałem potwierdzenie, że mogę!\n");
 }
 
 void tryCommitteeDataQueueConnection(int* committeeDataIPCQueueId,
@@ -57,12 +64,17 @@ void tryCommitteeDataQueueConnection(int* committeeDataIPCQueueId,
   if ((*committeeDataIPCQueueId =
     msgget(COMMITTEE_DATA_IPC_QUEUE_KEY, 0)) == -1)
     syserr(IPC_QUEUE_NOT_INITIALIZED_ERROR_CODE);
+
+  fprintf(stderr, "Nawiązałem połączenie z odpowiednią rurą!\n");
 }
 
 void sendCommitteeMessage(int IPCQueueId, committeeMessage* message) {
   const int committeeMessageSize = sizeof(committeeMessage) - sizeof(long);
+  fprintf(stderr, "Typ wiadomości: %d\n", message->type);
   if (msgsnd(IPCQueueId, (void*) message, committeeMessageSize, 0) != 0)
     syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
+  
+  fprintf(stderr, "Info poprawnie wysłane\n");
 }
 
 void prepareAndSendBasicCommitteeInfo(int IPCQueueId,
@@ -70,14 +82,22 @@ void prepareAndSendBasicCommitteeInfo(int IPCQueueId,
   unsigned int totalVotes) {
  
   committeeMessage message;
-
+/*  const int committeeMessageSize = sizeof(committeeMessage) - sizeof(long);*/
   /* Initialization. */
   localInfo->eligibledVoters = eligibledVoters;
   localInfo->totalVotes = totalVotes;
   message.operationId = committee;
   message.localInfo = *localInfo;
-
+  message.type = HEADER;
+  
+  fprintf(stderr, "Wysyłam podstawowe wiadomości.\n");
   sendCommitteeMessage(IPCQueueId, &message);
+
+  /*if (msgsnd(IPCQueueId, (void*) &message, committeeMessageSize, 0) != 0)
+	  syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);*/
+
+  fprintf(stderr, "Info poprawnie wysłane\n");
+
 }
 
 void prepareAndSendCommitteeMessage(int IPCQueueId, long committee,
@@ -90,7 +110,13 @@ void prepareAndSendCommitteeMessage(int IPCQueueId, long committee,
   message.list = list;
   message.candidate = candidate;
   message.candidateVotes = candidateVotes;
-  
+  message.type = DATA;
+
+  fprintf(stderr, "--------------------------\n");
+  if (message.type == HEADER) fprintf(stderr, "HEADER");
+  if (message.type == DATA) fprintf(stderr, "DATA");
+  fprintf(stderr, "--------------------------\n");
+
   sendCommitteeMessage(IPCQueueId, &message);
 }
 
@@ -125,7 +151,7 @@ void waitForServerResponseAndPrintResults(long committee,
   serverAckMessage serverResponse;
   const int serverResponseSize = sizeof(serverAckMessage) - sizeof(long);
 
-
+  fprintf(stderr, "Czekam na odpowiedź zwrotną, komisja: %d\n", committee);
   /* Try fetching finish IPC queue id. */
   if ((finishIPCQueueId = msgget(FINISH_IPC_QUEUE_KEY, 0)) == -1)
     syserr(IPC_QUEUE_NOT_INITIALIZED_ERROR_CODE);
@@ -135,6 +161,7 @@ void waitForServerResponseAndPrintResults(long committee,
     committee, 0) != serverResponseSize)
     syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE);
 
+  fprintf(stderr, "Doczekałem się\n");
   printResults(localInfo, serverResponse.processedMessages,
     serverResponse.validVotes);	
 }

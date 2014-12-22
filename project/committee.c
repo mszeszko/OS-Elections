@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
 
   /* Send ordinary chunks of data. */  
   while (scanf("%u %u %u", &list, &candidate, &candidateVotes) != EOF) {
+    fprintf(stderr, "Będę teraz wczytywał dane z STDIN!\n");
     prepareAndSendCommitteeMessage(committeeDataIPCQueueId, committee, list,
       candidate, candidateVotes);
   }
@@ -58,7 +59,7 @@ int main(int argc, char** argv) {
   /* Send `finish` message to the thread and wait for ACK. */
   prepareAndSendFinishMessage(committeeDataIPCQueueId, committee);
   
-  waitForServerResponseAndPrintResults(committeeDataIPCQueueId, &localInfo);
+  waitForServerResponseAndPrintResults(committee, &localInfo);
 
   return EXIT_SUCCESS;
 }

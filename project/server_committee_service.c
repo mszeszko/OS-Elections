@@ -6,6 +6,8 @@
 
 #include "server_committee_service.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -33,7 +35,7 @@ void initializeCommitteeWorkerResources(sharedDataStructures* sharedData,
   resources->list = list; 
 }
 
-void receiveConnectionRequest(int IPCQueueId, unsigned int* committee) {
+void receiveConnectionRequest(int IPCQueueId, long* committee) {
   initialConnectionMessage initMessage;
   const int initialConnectionMessageSize =
     sizeof(initialConnectionMessage) - sizeof(long);
@@ -46,9 +48,9 @@ void receiveConnectionRequest(int IPCQueueId, unsigned int* committee) {
 }
 
 void receiveCommitteeMessage(int IPCQueueId, committeeMessage* message,
-  unsigned int committee) {
+  long committee) {
   const int committeeMessageSize = sizeof(committeeMessage) - sizeof(long);
-  if (msgrcv(IPCQueueId, &message, committeeMessageSize, committee, 0)
+  if (msgrcv(IPCQueueId, message, committeeMessageSize, committee, 0)
     != committeeMessageSize)
     syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE);
 }
@@ -82,15 +84,18 @@ void updateSharedData(sharedDataStructures* sharedData,
   --(syncVariables->workingCommitteeThreads);
 }
 
-void sendAckMessage(int IPCQueueId, unsigned int committee,
+void sendAckMessage(int IPCQueueId, long committee,
   unsigned int processedMessages, unsigned int validVotes) {
   serverAckMessage message;
   const int serverAckMessageSize = sizeof(serverAckMessage) - sizeof(long);
   
+  fprintf(stderr, "Wysyłam ACKA\n");
   message.operationId = committee;
   message.processedMessages = processedMessages;
   message.validVotes = validVotes;
 
   if (msgsnd(IPCQueueId, (void*) &message, serverAckMessageSize, 0) != 0)
-    syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE); 
+    syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
+
+  fprintf(stderr, "ACK został wysłany do komisji: %d!\n", message.operationId);
 }

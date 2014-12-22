@@ -43,8 +43,8 @@ void* reportWorkerThread(void* data) {
   /* After passing data for specific list or complete set of all lists
 	   put back group access token of value `list` to appropriate IPC queue. */
   putBackGroupAccessToken(queueIds.reportGroupAccessTokenIPCQueueId, list);
-
-  exit(EXIT_SUCCESS);
+ 
+  return 0;
 }
 
 void* reportDispatcherThread(void* data) {
@@ -64,21 +64,21 @@ void* reportDispatcherThread(void* data) {
       (void*) &list) != 0)
       syserr(REPORT_WORKER_THREAD_INITIALIZATION_ERROR_CODE);
   }
-
-  exit(EXIT_SUCCESS);
+ 
+  return 0;
 }
 
 void* committeeWorkerThread(void* data) {
   committeeMessage message;
   committeeWorkerResources resources;
-
+  
   /* Initialize resources. */
   unsigned int transferFinished = 0;
-  unsigned int committee = *((unsigned int*) data);
+  long committee = *((long*) data);
   initializeCommitteeWorkerResources(&sharedData, &resources, committee);
 
   /* Process committee data. */
-  while (!transferFinished) {
+  while (transferFinished == 0) {
     receiveCommitteeMessage(queueIds.committeeDataIPCQueueId, &message,
       committee);
     
@@ -86,43 +86,47 @@ void* committeeWorkerThread(void* data) {
       case HEADER:
         resources.eligibledVoters = message.localInfo.eligibledVoters;
         resources.totalVotes = message.localInfo.totalVotes;
+        fprintf(stderr, "HEADER--------\n");
         break;
       case DATA:
         resources.partialResults[message.list][message.candidate] =
           message.candidateVotes;
         resources.validVotes += message.candidateVotes;
+        fprintf(stderr, "DATA----------\n");
         break;
       case FINISH:
         transferFinished = 1;
+        fprintf(stderr, "FINISH--------\n");
         break;
     }
 
     ++resources.processedMessages;
   }
+  fprintf(stderr, "Wyszedłem\n");
   /* Send ack message to committee. */
   sendAckMessage(queueIds.finishIPCQueueId, committee,
     resources.processedMessages, resources.validVotes);
  
   /* Wait for exclusive access to update shared data. */
-  updateResultsServiceInitialProtocol(&syncTools, &syncVariables);
+  /*updateResultsServiceInitialProtocol(&syncTools, &syncVariables);*/
 
   /* Update shared data. */
   updateSharedData(&sharedData, &syncVariables, &resources);
 
   /* Release mutex and wake up awaiting thread. */
-  updateResultsServiceEndingProtocol(&syncTools, &syncVariables);
+  /*updateResultsServiceEndingProtocol(&syncTools, &syncVariables);*/
   
   /* Wake up awaiting worker thread! */
   pthread_mutex_lock(&syncTools.mutex);
   pthread_cond_signal(&syncTools.committeeWorkingThreadsCondition);
   pthread_mutex_unlock(&syncTools.mutex);
 
-  exit(EXIT_SUCCESS);
+  return 0;
 }
 
 void* committeeDispatcherThread(void* data) {
-  unsigned int committee;
-  unsigned int committee_available;
+  long committee;
+  long committee_available;
   
   initialConnectionMessage initMessage;
   int initialConnectionMessageSize;
@@ -150,7 +154,7 @@ void* committeeDispatcherThread(void* data) {
     }
 
     /* Send response back to the specific committee. */
-    initMessage.operationId = (long) committee;
+    initMessage.operationId = committee;
     initMessage.ack = (committee_available == 0) ?
       CONNECTION_SUCCEEDED : CONNECTION_REFUSED;
     if (msgsnd(queueIds.initConnectionIPCQueueId, (void*) &initMessage,
@@ -176,9 +180,11 @@ void* committeeDispatcherThread(void* data) {
       &syncTools.workerThreadAttribute, committeeWorkerThread,
       (void*) &committee) != 0)
       syserr(COMMITTEE_WORKER_THREAD_INITIALIZATION_ERROR_CODE);
+    
+    fprintf(stderr, "Nowy dedykowany wątek został zespawnowany dla komisji: %ld\n", committee);
   }
 
-  exit(EXIT_SUCCESS);
+  return 0;
 }
 
 void freeResources(int signum) {
