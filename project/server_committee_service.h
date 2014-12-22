@@ -12,7 +12,7 @@
 
 extern void initializeCommitteeWorkerResources(
   sharedDataStructures* sharedData, committeeWorkerResources* resources,
-  unsigned int list);
+  int list);
 
 extern void receiveConnectionRequest(int IPCQueueId, long* committee);
 
@@ -20,7 +20,7 @@ extern void receiveCommitteeMessage(int IPCQueueId, committeeMessage* message,
   long committee);
 
 extern void sendAckMessage(int IPCQueueId, long committee,
-  unsigned int processedMessages, unsigned int validVotes);
+  int processedMessages, int validVotes);
 
 extern void updateSharedData(sharedDataStructures* sharedData,
   sharedSynchronizationVariables* syncVariables,

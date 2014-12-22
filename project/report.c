@@ -16,7 +16,7 @@
 #include "report_service.h"
 
 int main(int argc, char** argv) {
-  unsigned int list;
+  int list;
 
   int reportDataIPCQueueId;
 
@@ -26,10 +26,10 @@ int main(int argc, char** argv) {
   }
  
   /* By default, non-parametrized `report` process expects results
-     from all lists and it's represented by `list` = 0. */
+     from all lists and it's represented by `ALL_LISTS_ID`. */
   list = (argc == 2) ? atoi(argv[1]) : ALL_LISTS_ID;
 
-  /* We do allow to read reports in parellel for at most L + 1 processes
+  /* We do allow to read reports in parellel for at most MAX_LISTS + 1 processes
      that represents groups of distinct lists demands. */
   getReportGroupAccessToken(list);
 

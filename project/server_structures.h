@@ -23,24 +23,24 @@ typedef struct {
 
 /* Shared data structures. */
 typedef struct {
-  unsigned int electionResults[MAX_LISTS][MAX_CANDIDATES_PER_LIST];
-  unsigned int summaryListVotes[MAX_LISTS];
-  unsigned int processedCommittees;
-  unsigned int committeeConnectionPossible[MAX_COMMITTEES];
-  unsigned int eligibledVoters;
-  unsigned int validVotes;
-  unsigned int invalidVotes;
-  unsigned int lists;
-  unsigned int candidatesPerList;
-  unsigned int committees;
+  int electionResults[MAX_LISTS][MAX_CANDIDATES_PER_LIST];
+  int summaryListVotes[MAX_LISTS];
+  int processedCommittees;
+  int committeeConnectionPossible[MAX_COMMITTEES];
+  int eligibledVoters;
+  int validVotes;
+  int invalidVotes;
+  int lists;
+  int candidatesPerList;
+  int committees;
 } sharedDataStructures;
 
 /* Shared synchronization variables. */
 typedef struct {
-  unsigned int workingCommitteeThreads;
-  unsigned int committeesWantToUpdateResults;
-  unsigned int committeesUpdatingResults;
-  unsigned int reportsProcessingResults;
+  int workingCommitteeThreads;
+  int committeesWantToUpdateResults;
+  int committeesUpdatingResults;
+  int reportsProcessingResults;
 } sharedSynchronizationVariables;
  
 /* 
@@ -69,12 +69,12 @@ typedef struct {
 } applicationPackage;
 
 typedef struct {
-  unsigned int partialResults[MAX_LISTS][MAX_CANDIDATES_PER_LIST];
-  unsigned int eligibledVoters;
-  unsigned int processedMessages;
-  unsigned int totalVotes;
-  unsigned int validVotes;
-  unsigned int list;
+  int partialResults[MAX_LISTS][MAX_CANDIDATES_PER_LIST];
+  int eligibledVoters;
+  int processedMessages;
+  int totalVotes;
+  int validVotes;
+  int list;
 } committeeWorkerResources;
 
 #endif

@@ -16,14 +16,14 @@
 
 int main(int argc, char** argv) {
   
-  unsigned int eligibleVoters;
-  unsigned int votes;
+  int eligibleVoters;
+  int votes;
   
   long committee;
   
-  unsigned int list;
-  unsigned int candidate;
-  unsigned int candidateVotes;
+  int list;
+  int candidate;
+  int candidateVotes;
 
   basicCommitteeInfo localInfo;
 
@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
   tryCommitteeDataQueueConnection(&committeeDataIPCQueueId, committee);
 
   /* Read the data as we got `green light` on processing.. */
-  scanf("%u %u", &eligibleVoters, &votes);
+  scanf("%d %d", &eligibleVoters, &votes);
   
   /* Compose and send initial data message to committee-dedicated
      server thread. */
@@ -50,8 +50,7 @@ int main(int argc, char** argv) {
     &localInfo, eligibleVoters, votes);
 
   /* Send ordinary chunks of data. */  
-  while (scanf("%u %u %u", &list, &candidate, &candidateVotes) != EOF) {
-    fprintf(stderr, "Będę teraz wczytywał dane z STDIN!\n");
+  while (scanf("%d %d %d", &list, &candidate, &candidateVotes) != EOF) {
     prepareAndSendCommitteeMessage(committeeDataIPCQueueId, committee, list,
       candidate, candidateVotes);
   }

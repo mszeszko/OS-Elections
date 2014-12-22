@@ -20,7 +20,7 @@
 #include "server_structures.h"
 
 void initializeCommitteeWorkerResources(sharedDataStructures* sharedData,
-  committeeWorkerResources* resources, unsigned int list) {
+  committeeWorkerResources* resources, int list) {
   int i, j;
 
   /* Initialize partial results array. */
@@ -85,17 +85,14 @@ void updateSharedData(sharedDataStructures* sharedData,
 }
 
 void sendAckMessage(int IPCQueueId, long committee,
-  unsigned int processedMessages, unsigned int validVotes) {
+  int processedMessages, int validVotes) {
   serverAckMessage message;
   const int serverAckMessageSize = sizeof(serverAckMessage) - sizeof(long);
   
-  fprintf(stderr, "Wysyłam ACKA\n");
   message.operationId = committee;
   message.processedMessages = processedMessages;
   message.validVotes = validVotes;
 
   if (msgsnd(IPCQueueId, (void*) &message, serverAckMessageSize, 0) != 0)
     syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
-
-  fprintf(stderr, "ACK został wysłany do komisji: %d!\n", message.operationId);
 }

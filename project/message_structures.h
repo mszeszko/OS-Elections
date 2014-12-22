@@ -40,7 +40,7 @@ enum Connection {
 */
 typedef struct {
   long operationId;
-  unsigned int committee;
+  int committee;
   enum Connection ack;
 } initialConnectionMessage;
 
@@ -49,8 +49,8 @@ typedef struct {
    Basic local committee information.
 */
 typedef struct {
-  unsigned int eligibledVoters;
-  unsigned int totalVotes;
+  int eligibledVoters;
+  int totalVotes;
 } basicCommitteeInfo;
 
 
@@ -62,9 +62,9 @@ typedef struct {
 */
 typedef struct {
   long operationId;
-  unsigned int list;
-  unsigned int candidate;
-  unsigned int candidateVotes;
+  int list;
+  int candidate;
+  int candidateVotes;
   basicCommitteeInfo localInfo;
   enum CommitteeOperationType type;
 } committeeMessage;
@@ -76,8 +76,8 @@ typedef struct {
 */
 typedef struct {
   long operationId;
-  unsigned int processedMessages;
-  unsigned int validVotes;
+  int processedMessages;
+  int validVotes;
 } serverAckMessage;
 
 
@@ -86,11 +86,11 @@ typedef struct {
 */
 typedef struct {
   long operationId;
-  unsigned int processedCommittees;
-  unsigned int committees;
-  unsigned int validVotes;
-  unsigned int invalidVotes;
-  unsigned int eligibledVoters;
+  int processedCommittees;
+  int committees;
+  int validVotes;
+  int invalidVotes;
+  int eligibledVoters;
 } reportHeaderMessage;
 
 
@@ -98,10 +98,10 @@ typedef struct {
    Single list report structure.
 */
 typedef struct {
-  unsigned int list;
-  unsigned int candidates;
-  unsigned int candidateVotes[MAX_LISTS];
-  unsigned int votes;
+  int list;
+  int candidates;
+  int candidateVotes[MAX_LISTS];
+  int votes;
   enum ReportProgress reportProgress;
 } singleListReport;
 
@@ -116,7 +116,6 @@ typedef struct {
 */
 typedef struct {
   long operationId;
-  /*long reportList;*/
 } getAccessTokenMessage;
 
 typedef struct {

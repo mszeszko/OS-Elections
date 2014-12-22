@@ -11,7 +11,7 @@
 #include "error_codes.h"
 #include "message_structures.h"
 
-void getReportGroupAccessToken(unsigned int list) {
+void getReportGroupAccessToken(int list) {
   int reportGroupAccessTokenIPCQueueId;
   getAccessTokenMessage accessTokenMessage;
   const int getAccessTokenMessageSize =
@@ -22,8 +22,8 @@ void getReportGroupAccessToken(unsigned int list) {
     msgget(REPORT_GROUP_ACCESS_TOKEN_IPC_QUEUE_KEY, 0)) == -1)
     syserr(IPC_QUEUE_NOT_INITIALIZED_ERROR_CODE);
  
-  /* Wait for reading access token.
-     If `list` = `ALL_LISTS_ID` then wait for report for all lists. */
+  /* Wait for reading access token. If `list` == `ALL_LISTS_ID`,
+     then wait for reports gathered for all lists. */
   if (msgrcv(reportGroupAccessTokenIPCQueueId, &accessTokenMessage,
     getAccessTokenMessageSize, (long)list, 0) != getAccessTokenMessageSize)
     syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE); 
@@ -34,7 +34,7 @@ void tryReportConnection(int* reportDataIPCQueueId) {
     syserr(IPC_QUEUE_NOT_INITIALIZED_ERROR_CODE);
 }
 
-void sendGetReportMessageRequest(int IPCQueueId, unsigned int list) {
+void sendGetReportMessageRequest(int IPCQueueId, int list) {
   getReportMessage reportMessage;
   const int getReportMessageSize = sizeof(getReportMessage) - sizeof(long);
  
@@ -45,7 +45,7 @@ void sendGetReportMessageRequest(int IPCQueueId, unsigned int list) {
     syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
 }
 
-void printReportHeader(int reportDataIPCQueueId, unsigned int list) {
+void printReportHeader(int reportDataIPCQueueId, int list) {
   reportHeaderMessage header;
   float turnoutPercentage;
   const int reportHeaderMessageSize =
@@ -75,18 +75,18 @@ void printSingleListReport(singleListReport* listReport) {
   int i;
 
   /* List. */
-  fprintf(stderr, "%u ", listReport->list);
+  fprintf(stderr, "%d ", listReport->list);
   
   /* Votes. */
-  fprintf(stderr, "%u ", listReport->votes);
+  fprintf(stderr, "%d ", listReport->votes);
 
   /* Votes for particular candidate. */
   for (i = 1; i<= listReport->candidates; ++i)
-    fprintf(stderr, "%u ", listReport->candidateVotes[i]);
+    fprintf(stderr, "%d ", listReport->candidateVotes[i]);
   fprintf(stderr, "\n");
 }
 
-void receiveAndPrintData(int reportDataIPCQueueId, unsigned int list) {
+void receiveAndPrintData(int reportDataIPCQueueId, int list) {
   singleListReportMessage reportMessage;
   const int singleListReportMessageSize =
     sizeof(singleListReportMessage) - sizeof(long);
@@ -108,3 +108,4 @@ void receiveAndPrintData(int reportDataIPCQueueId, unsigned int list) {
   /* Access token is automatically restored by report-dedicated server thread
      after sending all data requested by current `report` process. */
 }
+

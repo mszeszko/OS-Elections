@@ -13,12 +13,12 @@ extern void prepareAndSendStatisticsReportHeader(sharedDataStructures* data,
   long operationId, int IPCQueueId);
 
 extern void prepareAndSendSingleListReport(sharedDataStructures* data,
-  unsigned int list, long operationId, int IPCQueueId);
+  int list, long operationId, int IPCQueueId);
 
 extern void prepareAndSendReportFinishMessage(long operationId,
   int IPCQueueId);
 
 extern void prepareAndSendCompleteReport(sharedDataStructures* data,
-  unsigned int list, int IPCQueueId);
+  int list, int IPCQueueId);
 
 #endif

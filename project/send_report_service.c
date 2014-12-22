@@ -20,7 +20,6 @@
 void prepareAndSendStatisticsHeaderReport(sharedDataStructures* data,
   long operationId, int IPCQueueId) {
   
-
   reportHeaderMessage headerMessage;
   const int reportHeaderMessageSize =
     sizeof(reportHeaderMessage) - sizeof(long);
@@ -54,7 +53,7 @@ void sendSingleReportMessage(singleListReport* report, long operationId,
 }
 
 void prepareAndSendSingleListReport(sharedDataStructures* data,
-  unsigned int list, long operationId, int IPCQueueId) {
+  int list, long operationId, int IPCQueueId) {
   int i;  
   singleListReport listReport;
 
@@ -79,7 +78,7 @@ void prepareAndSendReportFinishMessage(long operationId, int IPCQueueId) {
 }
 
 void prepareAndSendCompleteReport(sharedDataStructures* data,
-  unsigned int list, int IPCQueueId) {
+  int list, int IPCQueueId) {
   int i;
   long operationId = (long) list;
   prepareAndSendStatisticsHeaderReport(data, operationId, IPCQueueId);

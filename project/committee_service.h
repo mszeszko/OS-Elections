@@ -22,17 +22,17 @@ extern void sendCommitteeMessage(int IPCQueueId,
 
 extern void prepareAndSendBasicCommitteeInfo(int committeeDataIPCQueueId,
   long committee, basicCommitteeInfo* localInfo,
-  unsigned int eligibleVoters, unsigned int vote);
+  int eligibleVoters, int vote);
 
 extern void prepareAndSendCommitteeMessage(int committeeDataIPCQueueId,
-  long committee, unsigned int list, unsigned int candidate,
-  unsigned int candidateVotes);
+  long committee, int list, int candidate,
+  int candidateVotes);
 
 extern void prepareAndSendFinishMessage(int committeeDataIPCQueueId,
   long committee);
 
 extern void printResults(basicCommitteeInfo* localInfo,
-  unsigned int processedMessage, unsigned int validVotes);
+  int processedMessage, int validVotes);
 
 extern void waitForServerResponseAndPrintResults(long committee,
   basicCommitteeInfo* localInfo);

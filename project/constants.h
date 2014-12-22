@@ -30,23 +30,17 @@
 */
 #define INIT_CONNECTION_MESSAGE_TYPE MAX_LISTS + 1
 #define REPORT_REQUEST_MESSAGE_TYPE MAX_LISTS + 2
-/*
-   Process specific symbols.
-*/
-#define FINISHED_DATA_PROCESSING '#'
-#define REPORT_FINISHED '$'
-#define NOT_FINISHED_YET '@'
-#define CONNECTION_SUCCEDDED '<'
    
 /*
    Process specific templates.
 */
-#define PROCESSED_MESSAGES_TEMPLATE "Przetworzonych wpisów: %u\n"
-#define ELIGIBLED_VOTERS_TEMPLATE "Uprawnionych do głosowania: %u\n"
-#define VALID_VOTES_TEMPLATE "Głosów ważnych: %u\n"
-#define INVALID_VOTES_TEMPLATE "Głosów nieważnych: %u\n"
+#define PROCESSED_MESSAGES_TEMPLATE "Przetworzonych wpisów: %d\n"
+#define ELIGIBLED_VOTERS_TEMPLATE "Uprawnionych do głosowania: %d\n"
+#define VALID_VOTES_TEMPLATE "Głosów ważnych: %d\n"
+#define INVALID_VOTES_TEMPLATE "Głosów nieważnych: %d\n"
 #define TURNOUT_TEMPLATE "Frekwencja w lokalu: %.2f\n"
 
-#define PROCESSED_COMMITTEES_TEMPLATE "Przetworzonych komisji: %u / %u\n"
+#define PROCESSED_COMMITTEES_TEMPLATE "Przetworzonych komisji: %d / %d\n"
 #define COMMITTEE_RESULTS_TEMPLATE "Wyniki poszczególnych list:\n"
+
 #endif

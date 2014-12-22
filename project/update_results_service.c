@@ -13,8 +13,8 @@ void updateResultsServiceInitialProtocol(
   sharedSynchronizationVariables* variables) {
   pthread_mutex_lock(&tools->mutex);
   ++(variables->committeesWantToUpdateResults);
-  while (!((variables->reportsProcessingResults == 0) &&
-    (variables->committeesUpdatingResults)))
+  while ((variables->reportsProcessingResults) ||
+    (variables->committeesUpdatingResults))
     pthread_cond_wait(&tools->committeeUpdateResultsCondition, &tools->mutex);
   ++(variables->committeesUpdatingResults);
   pthread_mutex_unlock(&tools->mutex);

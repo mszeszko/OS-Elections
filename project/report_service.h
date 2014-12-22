@@ -7,12 +7,12 @@
 #ifndef __REPORT_SERVICE_H_
 #define __REPORT_SERVICE_H_
 
-extern void getReportGroupAccessToken(unsigned int list);
+extern void getReportGroupAccessToken(int list);
 
 extern void tryReportConnection(int* reportDataIPCQueueId);
 
-extern void receiveAndPrintData(int reportDataIPCQueueId, unsigned int list);
+extern void receiveAndPrintData(int reportDataIPCQueueId, int list);
 
-extern void sendGetReportMessageRequest(int IPCQueueId, unsigned int list);
+extern void sendGetReportMessageRequest(int IPCQueueId, int list);
 
 #endif
