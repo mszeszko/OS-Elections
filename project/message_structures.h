@@ -34,6 +34,22 @@ enum Connection {
   CONNECTION_REFUSED
 };
 
+enum IndexAccessibility {
+  AVAILABLE = 0, /* should not be changed at any reason. */
+  NOT_AVAILABLE,
+  NOT_FOUND = -1
+};
+
+typedef struct {
+  int threadIndex;
+  long committee;
+} committeeThreadData;
+
+typedef struct {
+  int threadIndex;
+  int pid;
+  int list;
+} reportThreadData;
 
 /* ************** */
 /* IPC STRUCTURES */
@@ -126,7 +142,8 @@ typedef struct {
 
 typedef struct {
   long operationId;
-  long reportList;
+  int pid;
+  int reportList;
 } getReportMessage;
 
 typedef struct {

@@ -41,6 +41,7 @@ typedef struct {
   int committeesWantToUpdateResults;
   int committeesUpdatingResults;
   int reportsProcessingResults;
+  int** partialResults[MAX_DEDICATED_SERVER_THREADS];
 } sharedSynchronizationVariables;
  
 /* 
@@ -62,6 +63,12 @@ typedef struct {
 } sharedSynchronizationTools;
 
 typedef struct {
+  pthread_t reportDispatcher;
+  pthread_t committeeDispatcher;
+  pthread_t workerThreads[MAX_DEDICATED_SERVER_THREADS];
+} sharedThreadVariables;
+
+typedef struct {
   sharedIPCQueueIds queueIds;
   sharedDataStructures sharedData;
   sharedSynchronizationVariables syncVariables;
@@ -69,7 +76,6 @@ typedef struct {
 } applicationPackage;
 
 typedef struct {
-  int partialResults[MAX_LISTS][MAX_CANDIDATES_PER_LIST];
   int eligibledVoters;
   int processedMessages;
   int totalVotes;

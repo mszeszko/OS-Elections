@@ -6,6 +6,8 @@
 
 #include "server_service.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -36,10 +38,6 @@ void initializeServerIPCQueues(sharedIPCQueueIds* queueIds) {
   if ((queueIds->finishIPCQueueId =
     msgget(FINISH_IPC_QUEUE_KEY, 0666 | IPC_CREAT | IPC_EXCL)) == -1)
     syserr(IPC_QUEUE_INITIALIZATION_ERROR_CODE);
-  if ((queueIds->reportGroupAccessTokenIPCQueueId =
-    msgget(REPORT_GROUP_ACCESS_TOKEN_IPC_QUEUE_KEY, 0666 | IPC_CREAT |
-    IPC_EXCL)) == -1)
-    syserr(IPC_QUEUE_INITIALIZATION_ERROR_CODE);
   if ((queueIds->reportDataIPCQueueId =
     msgget(REPORT_DATA_IPC_QUEUE_KEY, 0666 | IPC_CREAT | IPC_EXCL)) == -1)
     syserr(IPC_QUEUE_INITIALIZATION_ERROR_CODE);
@@ -62,8 +60,6 @@ void freeServerIPCQueuesResources(sharedIPCQueueIds* queueIds) {
     syserr(IPC_QUEUE_REMOVE_OPERATION_ERROR_CODE);
   if (msgctl(queueIds->finishIPCQueueId, IPC_RMID, 0) == -1)
     syserr(IPC_QUEUE_REMOVE_OPERATION_ERROR_CODE);
-  if (msgctl(queueIds->reportGroupAccessTokenIPCQueueId, IPC_RMID, 0) == -1)
-    syserr(IPC_QUEUE_REMOVE_OPERATION_ERROR_CODE);
   if (msgctl(queueIds->reportDataIPCQueueId, IPC_RMID, 0) == -1)
     syserr(IPC_QUEUE_REMOVE_OPERATION_ERROR_CODE);
 }
@@ -77,20 +73,7 @@ void destroyServerSyncTools(sharedSynchronizationTools* tools) {
     syserr(REPORTS_CONDITION_DESTROY_ERROR_CODE);
 }
 
-
-/* General. */
-void putSingleGroupAccessToken(int IPCQueueId, long token) {
-  groupAccessTokenMessage tokenMessage;
-  const int groupAccessTokenMessageSize =
-    sizeof(groupAccessTokenMessage) - sizeof(long);
-
-  tokenMessage.operationId = token;
-  if (msgsnd(IPCQueueId, (void*) &tokenMessage,
-    groupAccessTokenMessageSize, 0) != 0)
-    syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
-}
-
-void receiveReportRequestMessage(int IPCQueueId, int* list) {
+void receiveReportRequestMessage(int IPCQueueId, int* pid, int* list) {
   getReportMessage request;
   const int getReportMessageSize = sizeof(getReportMessage) - sizeof(long); 
   
@@ -98,17 +81,29 @@ void receiveReportRequestMessage(int IPCQueueId, int* list) {
     REPORT_REQUEST_MESSAGE_TYPE, 0) != getReportMessageSize)
     syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE);
   *list = request.reportList;
+  *pid = request.pid;
 }
 
-void putBackGroupAccessToken(int IPCQueueId, long list) {
-  putSingleGroupAccessToken(IPCQueueId, list);
-}
-
-void initializeReportGroupAccessTokenIPCQueue(int IPCQueueId,
-  int committees) {
+extern int findIndexInThreadsArray(sharedSynchronizationTools* tools,
+  sharedThreadVariables* threads) {
   int i;
-  for (i = 1; i<= committees; ++i)
-    putSingleGroupAccessToken(IPCQueueId, i);
-  putSingleGroupAccessToken(IPCQueueId, ALL_LISTS_ID);
+  pthread_mutex_lock(&tools->mutex);
+  for (i = 0; i< MAX_DEDICATED_SERVER_THREADS; ++i) {
+    if (threads->workerThreads[i] == AVAILABLE) {
+      threads->workerThreads[i] = NOT_AVAILABLE;
+      fprintf(stderr, "Ustawiam index: %d na zajety!\n", i);
+      pthread_mutex_unlock(&tools->mutex);
+      return i;
+    }
+  }
+  pthread_mutex_unlock(&tools->mutex);
+  return NOT_FOUND;
 }
 
+extern void releaseIndexInThreadsArray(sharedSynchronizationTools* tools,
+  sharedThreadVariables* threads, int threadIndex) {
+  pthread_mutex_lock(&tools->mutex);
+  fprintf(stderr, "Ustawiam index: %d na wolny!\n", threadIndex);
+  threads->workerThreads[threadIndex] = AVAILABLE;    
+  pthread_mutex_unlock(&tools->mutex);
+}

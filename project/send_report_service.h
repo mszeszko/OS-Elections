@@ -19,6 +19,6 @@ extern void prepareAndSendReportFinishMessage(long operationId,
   int IPCQueueId);
 
 extern void prepareAndSendCompleteReport(const sharedDataStructures* data,
-  int list, int IPCQueueId);
+  int pid, int list, int IPCQueueId);
 
 #endif

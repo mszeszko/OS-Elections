@@ -82,11 +82,11 @@ void prepareAndSendReportFinishMessage(long operationId, int IPCQueueId) {
 }
 
 void prepareAndSendCompleteReport(const sharedDataStructures* data,
-  int list, int IPCQueueId) {
+  int pid, int list, int IPCQueueId) {
   int i, j;
-  long operationId = (long) list;
+  long operationId = (long) pid;
   prepareAndSendStatisticsHeaderReport(data, operationId, IPCQueueId);
-  if (operationId == ALL_LISTS_ID) {
+  if (list == ALL_LISTS_ID) {
     for (i = 1; i<= data->lists; ++i)
       for (j = 1; j<= data->candidatesPerList; ++j)
         prepareAndSendSingleListReport(data, i, j, operationId, IPCQueueId);

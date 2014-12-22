@@ -13,6 +13,6 @@ extern void tryReportConnection(int* reportDataIPCQueueId);
 
 extern void receiveAndPrintData(int reportDataIPCQueueId, int list);
 
-extern void sendGetReportMessageRequest(int IPCQueueId, int list);
+extern void sendGetReportMessageRequest(int IPCQueueId, int pid, int list);
 
 #endif

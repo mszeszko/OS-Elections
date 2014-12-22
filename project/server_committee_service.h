@@ -12,7 +12,15 @@
 
 extern void initializeCommitteeWorkerResources(
   sharedDataStructures* sharedData, committeeWorkerResources* resources,
-  int list);
+  int** partialResults, int list);
+
+extern void initializeDynamicCommitteeStructure(int** partialResults, int rows,
+  int columns);
+
+extern void freeDynamicCommitteeStructure(int** partialResults, int rows);
+
+extern void freeCommitteeAllocatedStructures(
+  sharedSynchronizationVariables* threads, sharedDataStructures* sharedData);
 
 extern void receiveConnectionRequest(int IPCQueueId, long* committee);
 
@@ -24,6 +32,6 @@ extern void sendAckMessage(int IPCQueueId, long committee,
 
 extern void updateSharedData(sharedDataStructures* sharedData,
   sharedSynchronizationVariables* syncVariables,
-  committeeWorkerResources* resources);
+  committeeWorkerResources* resources, int** partialResults);
 
 #endif

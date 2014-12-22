@@ -11,48 +11,31 @@
 #include "error_codes.h"
 #include "message_structures.h"
 
-void getReportGroupAccessToken(int list) {
-  int reportGroupAccessTokenIPCQueueId;
-  getAccessTokenMessage accessTokenMessage;
-  const int getAccessTokenMessageSize =
-    sizeof(getAccessTokenMessage) - sizeof(long);
-
-
-  if ((reportGroupAccessTokenIPCQueueId =
-    msgget(REPORT_GROUP_ACCESS_TOKEN_IPC_QUEUE_KEY, 0)) == -1)
-    syserr(IPC_QUEUE_NOT_INITIALIZED_ERROR_CODE);
- 
-  /* Wait for reading access token. If `list` == `ALL_LISTS_ID`,
-     then wait for reports gathered for all lists. */
-  if (msgrcv(reportGroupAccessTokenIPCQueueId, &accessTokenMessage,
-    getAccessTokenMessageSize, (long)list, 0) != getAccessTokenMessageSize)
-    syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE); 
-}
-
 void tryReportConnection(int* reportDataIPCQueueId) {
   if ((*reportDataIPCQueueId = msgget(REPORT_DATA_IPC_QUEUE_KEY, 0)) == -1)
     syserr(IPC_QUEUE_NOT_INITIALIZED_ERROR_CODE);
 }
 
-void sendGetReportMessageRequest(int IPCQueueId, int list) {
+void sendGetReportMessageRequest(int IPCQueueId, int pid, int list) {
   getReportMessage reportMessage;
   const int getReportMessageSize = sizeof(getReportMessage) - sizeof(long);
  
   reportMessage.operationId = REPORT_REQUEST_MESSAGE_TYPE;
+  reportMessage.pid = pid;
   reportMessage.reportList = (long) list;
   
   if (msgsnd(IPCQueueId, &reportMessage, getReportMessageSize, 0) != 0)
     syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
 }
 
-void printReportHeader(int reportDataIPCQueueId, int list) {
+void printReportHeader(int reportDataIPCQueueId, int pid) {
   reportHeaderMessage header;
   float turnoutPercentage;
   const int reportHeaderMessageSize =
     sizeof(reportHeaderMessage) - sizeof(long);
 
   if (msgrcv(reportDataIPCQueueId, &header, reportHeaderMessageSize,
-    (long)list, 0) != reportHeaderMessageSize)
+    (long) pid, 0) != reportHeaderMessageSize)
     syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE);
 
   turnoutPercentage = 0;
@@ -84,17 +67,17 @@ void printSingleListReport(singleListReport* listReport) {
   fprintf(stderr, (listReport->position == LAST) ? "\n" : " ");
 }
 
-void receiveAndPrintData(int reportDataIPCQueueId, int list) {
+void receiveAndPrintData(int reportDataIPCQueueId, int pid) {
   singleListReportMessage reportMessage;
   const int singleListReportMessageSize =
     sizeof(singleListReportMessage) - sizeof(long);
   
-  printReportHeader(reportDataIPCQueueId, list);
+  printReportHeader(reportDataIPCQueueId, pid);
 
   /* As long as server did not confirm the end of the current report.. */
   while (1) {
     if (msgrcv(reportDataIPCQueueId, &reportMessage,
-      singleListReportMessageSize, (long)list, 0) !=
+      singleListReportMessageSize, (long) pid, 0) !=
       singleListReportMessageSize)
       syserr(IPC_QUEUE_RECEIVE_OPERATION_ERROR_CODE);
     if (reportMessage.listReport.reportProgress == REPORT_COMPLETED)
@@ -102,8 +85,5 @@ void receiveAndPrintData(int reportDataIPCQueueId, int list) {
     
     printSingleListReport(&reportMessage.listReport);
   }
-
-  /* Access token is automatically restored by report-dedicated server thread
-     after sending all data requested by current `report` process. */
 }
 
