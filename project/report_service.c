@@ -72,18 +72,16 @@ void printReportHeader(int reportDataIPCQueueId, int list) {
 }
 
 void printSingleListReport(singleListReport* listReport) {
-  int i;
-
-  /* List. */
-  fprintf(stderr, "%d ", listReport->list);
-  
-  /* Votes. */
-  fprintf(stderr, "%d ", listReport->votes);
-
+  if (listReport->position == FIRST) {
+    /* List. */
+    fprintf(stderr, "%d ", listReport->list);
+    /* Votes. */
+    fprintf(stderr, "%d ", listReport->votes);
+  }
   /* Votes for particular candidate. */
-  for (i = 1; i<= listReport->candidates; ++i)
-    fprintf(stderr, "%d ", listReport->candidateVotes[i]);
-  fprintf(stderr, "\n");
+  fprintf(stderr, "%d", listReport->candidateVotes);
+  /* Format report line. */
+  fprintf(stderr, (listReport->position == LAST) ? "\n" : " ");
 }
 
 void receiveAndPrintData(int reportDataIPCQueueId, int list) {

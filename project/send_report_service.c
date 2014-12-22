@@ -17,7 +17,7 @@
 #include "error_codes.h"
 #include "message_structures.h"
 
-void prepareAndSendStatisticsHeaderReport(sharedDataStructures* data,
+void prepareAndSendStatisticsHeaderReport(const sharedDataStructures* data,
   long operationId, int IPCQueueId) {
   
   reportHeaderMessage headerMessage;
@@ -38,8 +38,8 @@ void prepareAndSendStatisticsHeaderReport(sharedDataStructures* data,
     syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
 }
 
-void sendSingleReportMessage(singleListReport* report, long operationId,
-  int IPCQueueId) {
+void sendSingleReportMessage(const singleListReport* report,
+  long operationId, int IPCQueueId) {
   singleListReportMessage listReportMessage;
   const int singleListReportMessageSize =
     sizeof(singleListReportMessage) - sizeof(long);
@@ -52,21 +52,25 @@ void sendSingleReportMessage(singleListReport* report, long operationId,
     syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
 }
 
-void prepareAndSendSingleListReport(sharedDataStructures* data,
-  int list, long operationId, int IPCQueueId) {
-  int i;  
+void prepareAndSendSingleListReport(const sharedDataStructures* data,
+  int list, int candidate, long operationId, int IPCQueueId) {
   singleListReport listReport;
 
   /* Initialization */
   listReport.list = list;
-  listReport.candidates = data->candidatesPerList;
-
-  for (i = 1; i<= data->candidatesPerList; ++i)
-    listReport.candidateVotes[i] = data->electionResults[list][i];
+  listReport.candidateVotes = data->electionResults[list][candidate];
 
   listReport.votes = data->summaryListVotes[list];
   listReport.reportProgress = REPORT_IN_PROGRESS;
   
+  /* Set candidate position. */
+  if (candidate == 1)
+    listReport.position = FIRST;
+  else if (candidate == data->candidatesPerList)
+    listReport.position = LAST;
+  else
+    listReport.position = MIDDLE;
+
   sendSingleReportMessage(&listReport, operationId, IPCQueueId);
 }
 
@@ -77,16 +81,18 @@ void prepareAndSendReportFinishMessage(long operationId, int IPCQueueId) {
   sendSingleReportMessage(&listReport, operationId, IPCQueueId);
 }
 
-void prepareAndSendCompleteReport(sharedDataStructures* data,
+void prepareAndSendCompleteReport(const sharedDataStructures* data,
   int list, int IPCQueueId) {
-  int i;
+  int i, j;
   long operationId = (long) list;
   prepareAndSendStatisticsHeaderReport(data, operationId, IPCQueueId);
   if (operationId == ALL_LISTS_ID) {
     for (i = 1; i<= data->lists; ++i)
-      prepareAndSendSingleListReport(data, i, operationId, IPCQueueId);
+      for (j = 1; j<= data->candidatesPerList; ++j)
+        prepareAndSendSingleListReport(data, i, j, operationId, IPCQueueId);
   } else {
-    prepareAndSendSingleListReport(data, list, operationId, IPCQueueId);
+    for (j = 1; j<= data->candidatesPerList; ++j)
+      prepareAndSendSingleListReport(data, list, j, operationId, IPCQueueId);
   }
   prepareAndSendReportFinishMessage(operationId, IPCQueueId);
 }

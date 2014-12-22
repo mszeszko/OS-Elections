@@ -18,6 +18,12 @@ enum CommitteeOperationType {
   FINISH
 };
 
+enum CandidatePosition {
+  FIRST = 0,
+  MIDDLE,
+  LAST
+};
+
 enum ReportProgress {
   REPORT_IN_PROGRESS = 0,
   REPORT_COMPLETED
@@ -99,10 +105,10 @@ typedef struct {
 */
 typedef struct {
   int list;
-  int candidates;
-  int candidateVotes[MAX_LISTS];
+  int candidateVotes;
   int votes;
   enum ReportProgress reportProgress;
+  enum CandidatePosition position;
 } singleListReport;
 
 
