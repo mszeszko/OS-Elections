@@ -69,7 +69,7 @@ void updateSharedData(sharedDataStructures* sharedData,
   sharedData->summaryListVotes[resources->list] = resources->totalVotes; 
  
   /* 3) processed committees: */
-  ++sharedData->processedCommittees;
+  ++(sharedData->processedCommittees);
 
   /* 4) eligibled voters: */
   sharedData->eligibledVoters += resources->eligibledVoters;
@@ -80,8 +80,8 @@ void updateSharedData(sharedDataStructures* sharedData,
   /* 6) invalid votes: */
   sharedData->invalidVotes += resources->totalVotes - resources->validVotes;
 
-  /* 7) working committee threads: */
-  --(syncVariables->workingCommitteeThreads);
+  --(syncVariables->workingThreads);
+  
 }
 
 void sendAckMessage(int IPCQueueId, long committee,
