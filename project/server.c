@@ -55,7 +55,6 @@ void wakeUpAwaitingThread() {
 }
 
 void* reportWorkerThread(void* data) {
-  /*const int list = *((int *) data);*/
   reportThreadData threadData = *((reportThreadData*) data);
 
   /* Acquire mutex for `read` operation. */
@@ -82,12 +81,6 @@ void* reportWorkerThread(void* data) {
 void* reportDispatcherThread(void* data) {
   reportThreadData threadData;
 
-  /*pthread_t reportWorkerThreads[ALL_LISTS_ID + 1];*/
-  
-  /* Initialize all report group access tokens in appropriate  IPC queue. */
-  /*initializeReportGroupAccessTokenIPCQueue(
-    queueIds.reportGroupAccessTokenIPCQueueId, sharedData.committees);*/
-  
   while (1) {
     receiveReportRequestMessage(queueIds.reportDataIPCQueueId,
       &threadData.pid, &threadData.list);
@@ -97,6 +90,7 @@ void* reportDispatcherThread(void* data) {
     fprintf(stderr, "Raport, wszedłem, lista: %d\n", threadData.list);
 
     threadData.threadIndex = findIndexInThreadsArray(&syncTools, &threads);
+
     /* Spawn new report-dedicated thread to handle report sending. */
     if (pthread_create(&threads.workerThreads[threadData.threadIndex],
       &syncTools.workerThreadAttribute, reportWorkerThread,
@@ -110,9 +104,7 @@ void* reportDispatcherThread(void* data) {
 void* committeeWorkerThread(void* data) {
   committeeMessage message;
   committeeWorkerResources resources;
-
   int** partialResults;
-  int i;
 
   /* Initialize resources. */
   int transferFinished = 0;
@@ -121,13 +113,8 @@ void* committeeWorkerThread(void* data) {
   int rows = sharedData.lists;
   int columns = sharedData.candidatesPerList;
 
-  partialResults = (int**) malloc ((rows + 1) * sizeof(int*));
-  for (i = 0; i<= rows; ++i)
-    partialResults[i] = (int*) malloc ((columns + 1) * sizeof(int));
-  
+  partialResults = initializeDynamicCommitteeStructure(rows, columns);
   syncVariables.partialResults[threadData.threadIndex] = partialResults;
-  
-  /*initializeDynamicCommitteeStructure(partialResults, rows, columns);*/
 
   initializeCommitteeWorkerResources(&sharedData, &resources, partialResults,
     threadData.committee);
@@ -135,18 +122,17 @@ void* committeeWorkerThread(void* data) {
   while (!transferFinished) {
     receiveCommitteeMessage(queueIds.committeeDataIPCQueueId, &message,
       threadData.committee);
-    
     switch (message.type) {
       case HEADER:
         resources.eligibledVoters = message.localInfo.eligibledVoters;
         resources.totalVotes = message.localInfo.totalVotes;
-        ++(resources.processedMessages);
+        ++resources.processedMessages;
         break;
       case DATA:
         partialResults[message.list][message.candidate] =
           message.candidateVotes;
         resources.validVotes += message.candidateVotes;
-        ++(resources.processedMessages);
+        ++resources.processedMessages;
         break;
       case FINISH:
         transferFinished = 1;
@@ -163,8 +149,7 @@ void* committeeWorkerThread(void* data) {
   
   /* Update shared data and free dynamically allocated resources. */
   updateSharedData(&sharedData, &syncVariables, &resources, partialResults);
-  /*freeDynamicCommitteeStructure(partialResults, rows);*/
-  
+
   /* Release mutex and wake up awaiting thread. */
   updateResultsServiceEndingProtocol(&syncTools, &syncVariables);
 
@@ -236,19 +221,11 @@ void* committeeDispatcherThread(void* data) {
 
 /* Signal handling. */
 void freeResources(int signum) {
-  int i;
-  
   /* Cancel dispatcher threads..*/
   pthread_cancel(threads.reportDispatcher);
   pthread_cancel(threads.committeeDispatcher);
 
-  /* Cancel all worker threads. */
-  for (i = 0; i< MAX_DEDICATED_SERVER_THREADS; ++i)
-    if (threads.workerThreads[i] == 0)
-      pthread_cancel(threads.workerThreads[i]);
-  
   /* Free resources. */
-  /*freeCommitteeAllocatedStructures(&syncVariables, &sharedData); */
   freeServerIPCQueuesResources(&queueIds);
   destroyServerSyncTools(&syncTools);
   
@@ -277,7 +254,6 @@ int main(int argc, char** argv) {
   /* Set signal handling. */
   sigfillset(&block_mask);
   sigdelset(&block_mask, SIGINT);
-  sigdelset(&block_mask, SIGUSR1);
   
   setup_action.sa_handler = freeResources;
   setup_action.sa_mask = block_mask;

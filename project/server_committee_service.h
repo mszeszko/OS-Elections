@@ -14,8 +14,7 @@ extern void initializeCommitteeWorkerResources(
   sharedDataStructures* sharedData, committeeWorkerResources* resources,
   int** partialResults, int list);
 
-extern void initializeDynamicCommitteeStructure(int** partialResults, int rows,
-  int columns);
+extern int** initializeDynamicCommitteeStructure(int rows, int columns);
 
 extern void freeDynamicCommitteeStructure(int** partialResults, int rows);
 

@@ -30,21 +30,22 @@ void initializeCommitteeWorkerResources(sharedDataStructures* sharedData,
   /* Initialize partial results array. */
   for(i = 1; i<= rows; ++i)
     for (j = 1; j<= columns; ++j)
-      partialResults[i * rows + columns] = 0;
+      partialResults[i][j] = 0;
   
   /* Other.. */
+  resources->processedMessages = 0;
   resources->eligibledVoters = 0;
   resources->totalVotes = 0;
   resources->validVotes = 0;
   resources->list = list; 
 }
 
-void initializeDynamicCommitteeStructure(int** partialResults, int rows,
-  int columns) {
+int** initializeDynamicCommitteeStructure(int rows, int columns) {
   int i;
-  partialResults = (int**) malloc ((rows + 1) * sizeof(int*));
+  int** partialResults = (int**) malloc ((rows + 1) * sizeof(int*));
   for (i = 0; i<= rows; ++i)
     partialResults[i] = (int*) malloc ((columns + 1) * sizeof(int));
+  return partialResults;
 }
 
 void freeDynamicCommitteeStructure(int** partialResults, int rows) {
@@ -121,7 +122,9 @@ void sendAckMessage(int IPCQueueId, long committee,
   message.operationId = committee;
   message.processedMessages = processedMessages;
   message.validVotes = validVotes;
-
+  
+  fprintf(stderr, "Processed messages: %d\n", message.processedMessages);
+  fprintf(stderr, "ValidVotes: %d\n", message.validVotes);
   if (msgsnd(IPCQueueId, (void*) &message, serverAckMessageSize, 0) != 0)
     syserr(IPC_QUEUE_SEND_OPERATION_ERROR_CODE);
 }
