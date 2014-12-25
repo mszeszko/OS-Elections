@@ -32,7 +32,7 @@ sharedThreadVariables threads;
 
 
 void waitBeforeSpawningWorkerThread() {
-  /* Wait to proces the data until there will be less than maximal
+  /* Wait to process the data until there will be less than maximal
      number of dedicated working threads. */
   pthread_mutex_lock(&syncTools.mutex);
   while (syncVariables.workingThreads ==
@@ -149,12 +149,15 @@ void* committeeWorkerThread(void* data) {
   
   /* Update shared data and free dynamically allocated resources. */
   updateSharedData(&sharedData, &syncVariables, &resources, partialResults);
-
-  /* Release mutex and wake up awaiting thread. */
-  updateResultsServiceEndingProtocol(&syncTools, &syncVariables);
+  
+  /* Free dynamically allocated structure. */
+  freeDynamicCommitteeStructure(partialResults, rows);
 
   /* Release index in thread array. */
   releaseIndexInThreadsArray(&syncTools, &threads, threadData.threadIndex);
+
+  /* Release mutex and wake up awaiting thread. */
+  updateResultsServiceEndingProtocol(&syncTools, &syncVariables);
 
   wakeUpAwaitingThread();
   

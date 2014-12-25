@@ -52,7 +52,7 @@ void freeDynamicCommitteeStructure(int** partialResults, int rows) {
   int i;
   if (partialResults == NULL)
     return;
-  for (i = 0; i<= rows; ++i)
+  for (i = 1; i<= rows; ++i)
     free(partialResults[i]);
   free(partialResults);
   partialResults = NULL;
